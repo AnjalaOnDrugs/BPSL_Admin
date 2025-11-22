@@ -52,69 +52,16 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
-
-                {/* --- CONTROLS SECTION --- */}
-                <div className="w-full md:w-1/3 p-8 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col bg-gray-900/50">
-                    <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xl font-light text-white tracking-widest uppercase">Generate Wish</h2>
-                        <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
-                            <X size={24} />
-                        </button>
-                    </div>
-
-                    <div className="space-y-6 flex-1">
-                        <div>
-                            <label className="flex items-center text-xs font-bold text-cyan-500 uppercase tracking-widest mb-3">
-                                <Type size={14} className="mr-2" /> Recipient Name
-                            </label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:outline-none transition-colors"
-                                placeholder="Enter Name"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="flex items-center text-xs font-bold text-cyan-500 uppercase tracking-widest mb-3">
-                                <Calendar size={14} className="mr-2" /> Turning Age
-                            </label>
-                            <input
-                                type="text"
-                                value={age}
-                                onChange={(e) => setAge(e.target.value)}
-                                className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:outline-none transition-colors"
-                                placeholder="Enter Age"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-gray-800">
-                        <button
-                            onClick={handleDownload}
-                            disabled={isGenerating}
-                            className="w-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-cyan-500/50 text-gray-400 hover:text-cyan-400 font-medium py-4 rounded-xl transition-all transform active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs"
-                        >
-                            {isGenerating ? (
-                                <span className="animate-pulse">Generating...</span>
-                            ) : (
-                                <>
-                                    <Download size={16} className="mr-2" /> Download JPEG
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row-reverse max-h-[90vh] md:max-h-[85vh]">
 
                 {/* --- PREVIEW SECTION --- */}
-                <div className="w-full md:w-2/3 bg-black flex items-center justify-center p-8 relative overflow-hidden">
+                <div className="w-full md:w-2/3 bg-black flex items-center justify-center p-4 md:p-8 relative overflow-hidden shrink-0">
                     {/* Background Ambience */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-50"></div>
 
                     {/* CARD CONTAINER - Fixed Aspect Ratio Container */}
-                    <div className="relative shadow-2xl shadow-black transform scale-[0.65] sm:scale-75 md:scale-90 lg:scale-100 transition-transform duration-300 origin-center" style={{ width: '400px', height: '500px' }}> {/* 4:5 Ratio approx */}
+                    {/* On mobile: scale down but keep aspect ratio. On desktop: fixed size. */}
+                    <div className="relative shadow-2xl shadow-black transform scale-[0.55] sm:scale-75 md:scale-90 lg:scale-100 transition-transform duration-300 origin-center" style={{ width: '400px', height: '500px' }}> {/* 4:5 Ratio approx */}
 
                         {/* THE ACTUAL CARD TO CAPTURE */}
                         <div
@@ -189,6 +136,60 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* --- CONTROLS SECTION --- */}
+                <div className="w-full md:w-1/3 p-6 md:p-8 border-t md:border-t-0 md:border-r border-gray-800 flex flex-col bg-gray-900/50 overflow-y-auto">
+                    <div className="flex justify-between items-center mb-6 md:mb-8">
+                        <h2 className="text-lg md:text-xl font-light text-white tracking-widest uppercase">Generate Wish</h2>
+                        <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4 md:space-y-6 flex-1">
+                        <div>
+                            <label className="flex items-center text-xs font-bold text-cyan-500 uppercase tracking-widest mb-2 md:mb-3">
+                                <Type size={14} className="mr-2" /> Recipient Name
+                            </label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:outline-none transition-colors text-sm"
+                                placeholder="Enter Name"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="flex items-center text-xs font-bold text-cyan-500 uppercase tracking-widest mb-2 md:mb-3">
+                                <Calendar size={14} className="mr-2" /> Turning Age
+                            </label>
+                            <input
+                                type="text"
+                                value={age}
+                                onChange={(e) => setAge(e.target.value)}
+                                className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:outline-none transition-colors text-sm"
+                                placeholder="Enter Age"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-6 md:mt-8 pt-6 border-t border-gray-800">
+                        <button
+                            onClick={handleDownload}
+                            disabled={isGenerating}
+                            className="w-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-cyan-500/50 text-gray-400 hover:text-cyan-400 font-medium py-3 md:py-4 rounded-xl transition-all transform active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs"
+                        >
+                            {isGenerating ? (
+                                <span className="animate-pulse">Generating...</span>
+                            ) : (
+                                <>
+                                    <Download size={16} className="mr-2" /> Download JPEG
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
             </div>
