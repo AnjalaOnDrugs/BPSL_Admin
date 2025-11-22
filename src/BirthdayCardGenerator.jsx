@@ -5,10 +5,10 @@ import bpslLogo from './assets/BPSL logo.png';
 
 // --- BIAS IMAGES ---
 const BIAS_IMAGES = {
-    lisa: "https://i.ibb.co/Xfc29dhn/20240314-Lisa-Manoban-07.jpg",
+    lisa: "https://i.ibb.co/6cjn2p3K/20240314-Lisa-Manoban-07.jpg",
     jennie: "https://i.ibb.co/N2N5tWXC/FI-S-Z7ak-AAFRVy.jpg",
-    rose: "https://i.ibb.co/GQbJztJp/Blackpink-Ros-Rimowa-1.jpg",
-    jisoo: "https://i.ibb.co/tMB8jbqK/Fg8zt-Qx-WQAE-5c0.jpg",
+    rose: "https://i.ibb.co/JjMdDydt/Blackpink-Ros-Rimowa-1.jpg",
+    jisoo: "https://i.ibb.co/8DM6vjrs/Fg8zt-Qx-WQAE-5c0.jpg",
     ot4: "https://i.ibb.co/qLQD7J9S/b3f41670-7a3c-11f0-a34f-318be3fb0481.jpg"
 };
 
@@ -88,13 +88,6 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
                                 className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:outline-none transition-colors"
                                 placeholder="Enter Age"
                             />
-                        </div>
-
-                        <div className="p-4 bg-cyan-900/10 border border-cyan-500/20 rounded-lg">
-                            <p className="text-xs text-cyan-400 leading-relaxed">
-                                <Sparkles size={12} className="inline mr-1" />
-                                This premium template is designed for high-quality sharing. Adjust the text to fit perfectly.
-                            </p>
                         </div>
                     </div>
 
