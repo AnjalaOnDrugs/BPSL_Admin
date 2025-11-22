@@ -270,7 +270,7 @@ const App = () => {
                     const day = date.getDate();
                     return (
                       <div key={user.id || i} className="relative group cursor-pointer" onClick={() => setSelectedMember(user)}>
-                        <div className="absolute -left-[27.5px] top-1 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+                        <div className="absolute -left-[27.5px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
                         <div className="flex items-center justify-between">
                           <div>
                             <span className="text-xs font-bold text-cyan-500 mr-3 uppercase">{month} {day}</span>
@@ -281,7 +281,9 @@ const App = () => {
                     );
                   })}
                 </div>
-                <button onClick={() => setActiveTab('birthdays')} className="absolute bottom-6 right-6 flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
+              </div>
+              <div className="mt-8 flex justify-end">
+                <button onClick={() => setActiveTab('birthdays')} className="flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
                   View Full Timeline <ArrowRight size={14} className="ml-1" />
                 </button>
               </div>
@@ -433,59 +435,63 @@ const App = () => {
           )}
 
         </div>
-      </main>
+      </main >
 
       {/* --- SIDE PANEL (Existing) --- */}
-      {selectedMember && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
-            onClick={() => setSelectedMember(null)}
-          ></div>
+      {
+        selectedMember && (
+          <div className="fixed inset-0 z-50 flex justify-end">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+              onClick={() => setSelectedMember(null)}
+            ></div>
 
-          <div className="relative w-full max-w-md h-full bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform animate-in slide-in-from-right duration-300 flex flex-col">
-            <div className="p-6 border-b border-gray-800 flex justify-between items-start bg-black/40">
-              <div>
-                <h2 className="text-2xl text-white font-light">{selectedMember.name}</h2>
-                <p className="text-cyan-500 font-mono mt-1">{selectedMember.phone}</p>
-              </div>
-              <button onClick={() => setSelectedMember(null)} className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
-                <X size={24} />
-              </button>
-            </div>
-            <div className="flex-1 p-8 overflow-y-auto space-y-8">
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Update Status</label>
-                <StatusSelector
-                  currentStatus={selectedMember.status}
-                  onUpdate={(newStatus) => handleUpdateStatus(selectedMember.id, newStatus)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <DetailItem icon={<Calendar size={16} />} label="Birthday" value={selectedMember.birthday ? new Date(selectedMember.birthday).toLocaleDateString() : '--'} />
-                <DetailItem icon={<Clock size={16} />} label="Added On" value={selectedMember.dateAdded ? new Date(selectedMember.dateAdded).toLocaleDateString() : '--'} />
-              </div>
-
-              <div className="pt-6 border-t border-gray-800">
-                <button
-                  onClick={() => setShowGenerator(true)}
-                  className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-pink-500/20 transition-all transform active:scale-95 flex items-center justify-center"
-                >
-                  <Wand2 size={18} className="mr-2" /> Generate Birthday Wish
+            <div className="relative w-full max-w-md h-full bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform animate-in slide-in-from-right duration-300 flex flex-col">
+              <div className="p-6 border-b border-gray-800 flex justify-between items-start bg-black/40">
+                <div>
+                  <h2 className="text-2xl text-white font-light">{selectedMember.name}</h2>
+                  <p className="text-cyan-500 font-mono mt-1">{selectedMember.phone}</p>
+                </div>
+                <button onClick={() => setSelectedMember(null)} className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
+                  <X size={24} />
                 </button>
+              </div>
+              <div className="flex-1 p-8 overflow-y-auto space-y-8">
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Update Status</label>
+                  <StatusSelector
+                    currentStatus={selectedMember.status}
+                    onUpdate={(newStatus) => handleUpdateStatus(selectedMember.id, newStatus)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <DetailItem icon={<Calendar size={16} />} label="Birthday" value={selectedMember.birthday ? new Date(selectedMember.birthday).toLocaleDateString() : '--'} />
+                  <DetailItem icon={<Clock size={16} />} label="Added On" value={selectedMember.dateAdded ? new Date(selectedMember.dateAdded).toLocaleDateString() : '--'} />
+                </div>
+
+                <div className="pt-6 border-t border-gray-800">
+                  <button
+                    onClick={() => setShowGenerator(true)}
+                    className="w-full bg-gray-900/50 hover:bg-gray-800 border border-gray-800 hover:border-pink-500/50 text-gray-400 hover:text-pink-400 font-medium py-3 rounded-lg transition-all transform active:scale-95 flex items-center justify-center uppercase tracking-wider text-xs"
+                  >
+                    <Wand2 size={16} className="mr-2" /> Generate Birthday Wish
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {showGenerator && selectedMember && (
-        <BirthdayCardGenerator
-          member={selectedMember}
-          onClose={() => setShowGenerator(false)}
-        />
-      )}
-    </div>
+      {
+        showGenerator && selectedMember && (
+          <BirthdayCardGenerator
+            member={selectedMember}
+            onClose={() => setShowGenerator(false)}
+          />
+        )
+      }
+    </div >
   );
 };
 

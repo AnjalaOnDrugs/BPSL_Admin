@@ -95,13 +95,13 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
                         <button
                             onClick={handleDownload}
                             disabled={isGenerating}
-                            className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-pink-500/20 transition-all transform active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-cyan-500/50 text-gray-400 hover:text-cyan-400 font-medium py-4 rounded-xl transition-all transform active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs"
                         >
                             {isGenerating ? (
                                 <span className="animate-pulse">Generating...</span>
                             ) : (
                                 <>
-                                    <Download size={20} className="mr-2" /> Download JPEG
+                                    <Download size={16} className="mr-2" /> Download JPEG
                                 </>
                             )}
                         </button>
@@ -114,7 +114,7 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-50"></div>
 
                     {/* CARD CONTAINER - Fixed Aspect Ratio Container */}
-                    <div className="relative shadow-2xl shadow-black" style={{ width: '400px', height: '500px' }}> {/* 4:5 Ratio approx */}
+                    <div className="relative shadow-2xl shadow-black transform scale-[0.65] sm:scale-75 md:scale-90 lg:scale-100 transition-transform duration-300 origin-center" style={{ width: '400px', height: '500px' }}> {/* 4:5 Ratio approx */}
 
                         {/* THE ACTUAL CARD TO CAPTURE */}
                         <div
