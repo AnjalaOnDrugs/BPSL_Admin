@@ -5,11 +5,11 @@ import bpslLogo from './assets/BPSL logo.png';
 
 // --- BIAS IMAGES ---
 const BIAS_IMAGES = {
-    lisa: "https://lh3.google.com/u/2/d/1QrIDiPN8oy9_UYtnJbAQjFtOH-19jWDO=w2560-h966-iv1?auditContext=thumbnail&auditContext=prefetch",
-    jennie: "https://lh3.google.com/u/2/d/1o2SERMdD8ZZIuWZtn8fMGcucybXLqLFu=w2560-h966-iv1?auditContext=thumbnail&auditContext=prefetch",
-    rose: "https://lh3.google.com/u/2/d/1787KLOx3hJly0PNbTIH5YtBTVIQ0BCC1=w2560-h966-iv1?auditContext=thumbnail&auditContext=prefetch",
-    jisoo: "https://lh3.google.com/u/2/d/1gYlbnYk9MaTZNmj945u9aig1vVsOtWS1=w2560-h966-iv1?auditContext=thumbnail&auditContext=prefetch",
-    ot4: "https://lh3.google.com/u/2/d/1Mn0CPbfhuJLqVvgGXG8MUnvfTt7U7PmC=w1278-h965-iv1?auditContext=thumbnail&auditContext=prefetch"
+    lisa: "https://i.ibb.co/Xfc29dhn/20240314-Lisa-Manoban-07.jpg",
+    jennie: "https://i.ibb.co/N2N5tWXC/FI-S-Z7ak-AAFRVy.jpg",
+    rose: "https://i.ibb.co/GQbJztJp/Blackpink-Ros-Rimowa-1.jpg",
+    jisoo: "https://i.ibb.co/tMB8jbqK/Fg8zt-Qx-WQAE-5c0.jpg",
+    ot4: "https://i.ibb.co/qLQD7J9S/b3f41670-7a3c-11f0-a34f-318be3fb0481.jpg"
 };
 
 const getBiasImage = (bias) => {
