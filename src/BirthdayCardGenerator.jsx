@@ -61,78 +61,81 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
 
                     {/* CARD CONTAINER - Fixed Aspect Ratio Container */}
                     {/* On mobile: scale down but keep aspect ratio. On desktop: fixed size. */}
-                    <div className="relative shadow-2xl shadow-black transform scale-[0.55] sm:scale-75 md:scale-90 lg:scale-100 transition-transform duration-300 origin-center" style={{ width: '400px', height: '500px' }}> {/* 4:5 Ratio approx */}
+                    {/* WRAPPER: Explicit height on mobile to reclaim space from scaled element */}
+                    <div className="relative w-full h-[320px] md:h-auto md:w-auto flex items-center justify-center">
+                        <div className="absolute md:relative shadow-2xl shadow-black transform scale-[0.55] sm:scale-75 md:scale-90 lg:scale-100 transition-transform duration-300 origin-center" style={{ width: '400px', height: '500px' }}> {/* 4:5 Ratio approx */}
 
-                        {/* THE ACTUAL CARD TO CAPTURE */}
-                        <div
-                            ref={cardRef}
-                            className="w-full h-full bg-black relative overflow-hidden flex flex-col items-center justify-center text-center"
-                        >
-                            {/* 1. Background Layer */}
-                            <div className="absolute inset-0 z-0">
-                                {/* Dark Base */}
-                                <div className="absolute inset-0 bg-[#050505]"></div>
+                            {/* THE ACTUAL CARD TO CAPTURE */}
+                            <div
+                                ref={cardRef}
+                                className="w-full h-full bg-black relative overflow-hidden flex flex-col items-center justify-center text-center"
+                            >
+                                {/* 1. Background Layer */}
+                                <div className="absolute inset-0 z-0">
+                                    {/* Dark Base */}
+                                    <div className="absolute inset-0 bg-[#050505]"></div>
 
-                                {/* Neon Gradients */}
-                                <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-purple-900/40 to-transparent"></div>
-                                <div className="absolute bottom-0 right-0 w-3/4 h-3/4 bg-gradient-to-t from-cyan-900/20 to-transparent rounded-full blur-3xl"></div>
+                                    {/* Neon Gradients */}
+                                    <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-purple-900/40 to-transparent"></div>
+                                    <div className="absolute bottom-0 right-0 w-3/4 h-3/4 bg-gradient-to-t from-cyan-900/20 to-transparent rounded-full blur-3xl"></div>
 
-                                {/* Abstract Shapes */}
-                                <div className="absolute top-10 left-10 w-32 h-32 border border-pink-500/20 rounded-full blur-[2px]"></div>
-                                <div className="absolute bottom-20 right-10 w-48 h-48 border border-cyan-500/20 rounded-full blur-[1px]"></div>
+                                    {/* Abstract Shapes */}
+                                    <div className="absolute top-10 left-10 w-32 h-32 border border-pink-500/20 rounded-full blur-[2px]"></div>
+                                    <div className="absolute bottom-20 right-10 w-48 h-48 border border-cyan-500/20 rounded-full blur-[1px]"></div>
 
-                                {/* Grid Pattern Overlay */}
-                                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+                                    {/* Grid Pattern Overlay */}
+                                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
 
-                                {/* Bias Image Overlay (Blended) */}
-                                {getBiasImage(member?.bias) && (
-                                    <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen pointer-events-none">
-                                        <img
-                                            src={getBiasImage(member?.bias)}
-                                            alt="Bias"
-                                            className="w-full h-full object-cover grayscale contrast-125 brightness-75 mask-image-gradient"
-                                            style={{ maskImage: 'linear-gradient(to bottom, transparent, black, transparent)' }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* 2. Border Frame */}
-                            <div className="absolute inset-4 border border-white/10 z-10 rounded-lg">
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-1 bg-black"></div>
-                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-20 h-1 bg-black"></div>
-                            </div>
-
-                            {/* 3. Content Layer */}
-                            <div className="relative z-20 px-8 py-12 flex flex-col items-center h-full justify-between">
-
-                                {/* Top Decoration */}
-                                <div className="mb-4 animate-pulse">
-                                    <img src={bpslLogo} alt="BPSL Logo" className="w-16 h-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-                                </div>
-
-                                {/* Main Text */}
-                                <div className="flex-1 flex flex-col justify-center items-center space-y-2">
-                                    <h3 className="text-cyan-400 tracking-[0.3em] text-sm font-bold uppercase mb-2">Happy Birthday</h3>
-
-                                    <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] leading-tight">
-                                        {name}
-                                    </h1>
-
-                                    <div className="flex items-center space-x-4 mt-6">
-                                        <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-pink-500"></div>
-                                        <div className="text-2xl font-light text-white italic">
-                                            Turning <span className="text-pink-500 font-bold not-italic">{age}</span>
+                                    {/* Bias Image Overlay (Blended) */}
+                                    {getBiasImage(member?.bias) && (
+                                        <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen pointer-events-none">
+                                            <img
+                                                src={getBiasImage(member?.bias)}
+                                                alt="Bias"
+                                                className="w-full h-full object-cover grayscale contrast-125 brightness-75 mask-image-gradient"
+                                                style={{ maskImage: 'linear-gradient(to bottom, transparent, black, transparent)' }}
+                                            />
                                         </div>
-                                        <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-pink-500"></div>
-                                    </div>
+                                    )}
                                 </div>
 
-                                {/* Footer */}
-                                <div className="mt-auto">
-                                    <p className="text-gray-500 text-[10px] tracking-[0.2em] uppercase">
-                                        Wishing you a fantastic year ahead
-                                    </p>
+                                {/* 2. Border Frame */}
+                                <div className="absolute inset-4 border border-white/10 z-10 rounded-lg">
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-1 bg-black"></div>
+                                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-20 h-1 bg-black"></div>
+                                </div>
+
+                                {/* 3. Content Layer */}
+                                <div className="relative z-20 px-8 py-12 flex flex-col items-center h-full justify-between">
+
+                                    {/* Top Decoration */}
+                                    <div className="mb-4 animate-pulse">
+                                        <img src={bpslLogo} alt="BPSL Logo" className="w-16 h-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                                    </div>
+
+                                    {/* Main Text */}
+                                    <div className="flex-1 flex flex-col justify-center items-center space-y-2">
+                                        <h3 className="text-cyan-400 tracking-[0.3em] text-sm font-bold uppercase mb-2">Happy Birthday</h3>
+
+                                        <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] leading-tight">
+                                            {name}
+                                        </h1>
+
+                                        <div className="flex items-center space-x-4 mt-6">
+                                            <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-pink-500"></div>
+                                            <div className="text-2xl font-light text-white italic">
+                                                Turning <span className="text-pink-500 font-bold not-italic">{age}</span>
+                                            </div>
+                                            <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-pink-500"></div>
+                                        </div>
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="mt-auto">
+                                        <p className="text-gray-500 text-[10px] tracking-[0.2em] uppercase">
+                                            Wishing you a fantastic year ahead
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
