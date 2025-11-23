@@ -22,17 +22,20 @@ import {
   LayoutDashboard,
   Wand2,
   UserPlus,
-  Check
+  Check,
+  Save,
+  MessageSquare,
+  Star
 } from 'lucide-react';
 import BirthdayCardGenerator from './BirthdayCardGenerator';
 
 // --- MOCK DATA (Fallback) ---
 const MOCK_DATA = [
-  { id: 2, name: "Anjala Botejue", phone: "0714545776", status: "In Group", dateAdded: "2023-10-01", birthday: "1990-10-02", bias: "Lisa" },
-  { id: 3, name: "Hashan Perera", phone: "0714500000", status: "Removed", dateAdded: "2023-10-05", birthday: "1995-10-02", bias: "Jennie" },
-  { id: 4, name: "Kamal Gunaratne", phone: "0771234567", status: "No Response", dateAdded: "2023-09-28", birthday: "1988-12-15", bias: "Rose" },
-  { id: 5, name: "Nimali Silva", phone: "0709988776", status: "Not Contacted", dateAdded: "2023-10-06", birthday: "1992-05-20", bias: "Jisoo" },
-  { id: 6, name: "Dilshan M", phone: "0711111111", status: "In Group", dateAdded: "2023-01-01", birthday: "1994-01-15", bias: "OT4" },
+  { id: 2, name: "Anjala Botejue", phone: "0714545776", status: "In Group", dateAdded: "2023-10-01", birthday: "1990-10-02", bias: "Lisa", score: 5, comments: "Active member" },
+  { id: 3, name: "Hashan Perera", phone: "0714500000", status: "Removed", dateAdded: "2023-10-05", birthday: "1995-10-02", bias: "Jennie", score: 2, comments: "Removed due to inactivity" },
+  { id: 4, name: "Kamal Gunaratne", phone: "0771234567", status: "No Response", dateAdded: "2023-09-28", birthday: "1988-12-15", bias: "Rose", score: 3, comments: "No reply yet" },
+  { id: 5, name: "Nimali Silva", phone: "0709988776", status: "Not Contacted", dateAdded: "2023-10-06", birthday: "1992-05-20", bias: "Jisoo", score: 4, comments: "To be contacted" },
+  { id: 6, name: "Dilshan M", phone: "0711111111", status: "In Group", dateAdded: "2023-01-01", birthday: "1994-01-15", bias: "OT4", score: 1, comments: "Low score" },
 ];
 
 // --- CONFIGURATION ---
@@ -44,10 +47,15 @@ const App = () => {
   const [data, setData] = useState(MOCK_DATA);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState('Main');
   const [connectionStatus, setConnectionStatus] = useState('idle');
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [showGenerator, setShowGenerator] = useState(false);
+
+  // Editable fields state
+  const [editName, setEditName] = useState('');
+  const [editComments, setEditComments] = useState('');
+
   // --- FETCH DATA ---
   const fetchData = async () => {
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_NEW_DEPLOYMENT_ID")) {
@@ -75,6 +83,14 @@ const App = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Sync local edit state when selectedMember changes
+  useEffect(() => {
+    if (selectedMember) {
+      setEditName(selectedMember.name || '');
+      setEditComments(selectedMember.comments || '');
+    }
+  }, [selectedMember]);
+
   // --- UPDATE STATUS ---
   const handleUpdateStatus = async (memberId, newStatus) => {
     const updatedData = data.map(m => m.id === memberId ? { ...m, status: newStatus } : m);
@@ -91,6 +107,36 @@ const App = () => {
     } catch (error) {
       console.error("Update failed", error);
       alert("Failed to save to Google Sheet.");
+    }
+  };
+
+  // --- UPDATE MEMBER DETAILS (Name, Comments) ---
+  const handleUpdateMemberDetails = async () => {
+    if (!selectedMember) return;
+
+    const updatedMember = { ...selectedMember, name: editName, comments: editComments };
+
+    // Optimistic update
+    const updatedData = data.map(m => m.id === selectedMember.id ? updatedMember : m);
+    setData(updatedData);
+    setSelectedMember(updatedMember);
+
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: 'updateMemberDetails',
+          id: selectedMember.id,
+          name: editName,
+          comments: editComments
+        }),
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" }
+      });
+      alert("Details saved!");
+    } catch (error) {
+      console.error("Update details failed", error);
+      alert("Failed to save details.");
     }
   };
 
@@ -132,12 +178,14 @@ const App = () => {
       const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (phone && phone.toString().includes(searchTerm));
 
-      if (filter === 'All') return matchesSearch;
-      if (filter === 'Main') return matchesSearch && member.status === 'In Group';
-      if (filter === 'Pending') return matchesSearch && (member.status === 'No Response' || member.status === 'Not Contacted');
-      if (filter === 'Learning') return matchesSearch && member.status === 'Removed';
+      if (!matchesSearch) return false;
 
-      return matchesSearch;
+      if (filter === 'Main') return member.status === 'In Group';
+      if (filter === 'Contacted') return member.status === 'No Response';
+      if (filter === 'Pending') return member.status === 'Not Contacted';
+      if (filter === 'Removed') return member.status === 'Removed';
+
+      return true;
     });
   }, [data, searchTerm, filter]);
 
@@ -346,20 +394,42 @@ const App = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="flex flex-wrap justify-center gap-2 mb-8">
-                {['All', 'Learning', 'Main', 'Pending'].map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-4 py-1 rounded-full text-xs md:text-sm transition-all duration-300 ${filter === f
-                      ? 'bg-green-500 text-black font-bold shadow-[0_0_15px_rgba(34,197,94,0.4)]'
-                      : 'text-gray-400 hover:text-white'
-                      }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+
+              {/* TABS */}
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                {[
+                  { id: 'Main', label: 'In Group', color: 'text-green-500' },
+                  { id: 'Contacted', label: 'No Response', color: 'text-yellow-400' },
+                  { id: 'Pending', label: 'Not Contacted', color: 'text-gray-400' },
+                  { id: 'Removed', label: 'Removed', color: 'text-red-500' }
+                ].map(tab => {
+                  // Calculate count for this tab
+                  const count = data.filter(m => {
+                    if (tab.id === 'Main') return m.status === 'In Group';
+                    if (tab.id === 'Contacted') return m.status === 'No Response';
+                    if (tab.id === 'Pending') return m.status === 'Not Contacted';
+                    if (tab.id === 'Removed') return m.status === 'Removed';
+                    return false;
+                  }).length;
+
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setFilter(tab.id)}
+                      className={`flex items-center space-x-2 px-6 py-3 rounded-full text-sm transition-all duration-300 border ${filter === tab.id
+                        ? 'bg-gray-900 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]'
+                        : 'bg-gray-900/40 border-gray-800 hover:border-gray-600'
+                        }`}
+                    >
+                      <span className={`font-medium ${filter === tab.id ? 'text-white' : 'text-gray-400'}`}>{tab.id}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-black/50 ${tab.color}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+
               <div className="space-y-4">
                 {filteredMembers.map((member, i) => (
                   <div key={member.id || i} className="group flex flex-col sm:flex-row items-start sm:items-center justify-between border border-gray-800 bg-gray-900/20 p-3 rounded-md hover:border-gray-700 hover:bg-gray-900/40 transition-all duration-300 gap-3 sm:gap-0">
@@ -368,10 +438,21 @@ const App = () => {
                         <User size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-gray-200 text-sm truncate">{member.name || 'Unknown'}</div>
+                        <div className="flex items-center space-x-2">
+                          <div className="text-gray-200 text-sm truncate font-medium">{member.name || 'Unknown'}</div>
+                          {/* Score Display */}
+                          {member.score && (
+                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${member.score <= 3 ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-400'}`}>
+                              {member.score}
+                            </div>
+                          )}
+                        </div>
                         <div className="flex items-center text-gray-500 text-xs font-mono mt-0.5">
                           <Phone size={12} className="mr-1" />
                           {member.phone || '--'}
+                          {member.bias && (
+                            <span className="ml-2 text-pink-500/70">• {member.bias}</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -491,8 +572,21 @@ const App = () => {
 
             <div className="relative w-full max-w-md h-full bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform animate-in slide-in-from-right duration-300 flex flex-col">
               <div className="p-6 border-b border-gray-800 flex justify-between items-start bg-black/40">
-                <div>
-                  <h2 className="text-2xl text-white font-light">{selectedMember.name}</h2>
+                <div className="w-full">
+                  {/* Editable Name */}
+                  <div className="flex items-center justify-between mb-2">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="bg-transparent text-2xl text-white font-light border-b border-transparent focus:border-cyan-500 focus:outline-none w-full mr-2"
+                      placeholder="Name"
+                    />
+                    <button onClick={handleUpdateMemberDetails} className="text-cyan-500 hover:text-cyan-400">
+                      <Save size={20} />
+                    </button>
+                  </div>
+
                   <p className="text-cyan-500 font-mono mt-1">{selectedMember.phone}</p>
 
                   {/* Contact Status Badge */}
@@ -523,9 +617,34 @@ const App = () => {
                     onUpdate={(newStatus) => handleUpdateStatus(selectedMember.id, newStatus)}
                   />
                 </div>
+
+                {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-6">
                   <DetailItem icon={<Calendar size={16} />} label="Birthday" value={selectedMember.birthday ? new Date(selectedMember.birthday).toLocaleDateString() : '--'} />
                   <DetailItem icon={<Clock size={16} />} label="Added On" value={selectedMember.dateAdded ? new Date(selectedMember.dateAdded).toLocaleDateString() : '--'} />
+                  <DetailItem icon={<Star size={16} />} label="Score" value={selectedMember.score || '--'} />
+                  <DetailItem icon={<User size={16} />} label="Bias" value={selectedMember.bias || '--'} />
+                </div>
+
+                {/* Comments Section */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-xs font-bold text-gray-500 uppercase tracking-widest">
+                    <MessageSquare size={14} className="mr-2" /> Comments
+                  </label>
+                  <textarea
+                    value={editComments}
+                    onChange={(e) => setEditComments(e.target.value)}
+                    className="w-full bg-black/20 border border-gray-800 rounded-lg p-3 text-gray-300 text-sm focus:border-cyan-500 focus:outline-none min-h-[100px]"
+                    placeholder="Add comments..."
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleUpdateMemberDetails}
+                      className="text-xs text-cyan-500 hover:text-cyan-400 font-medium uppercase tracking-wider"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
 
                 <div className="pt-6 border-t border-gray-800">

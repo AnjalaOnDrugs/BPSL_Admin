@@ -1,4 +1,4 @@
-```
+
 function doGet() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
   var range = sheet.getDataRange();
@@ -37,6 +37,8 @@ function doGet() {
       dateAdded: row[0],
       birthday: row[5],
       bias: row[9], // Column J is index 9
+      score: row[2], // Column C is index 2
+      comments: row[3], // Column D is index 3
       isSaved: isSaved
     });
   }
@@ -75,6 +77,27 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({
         status: 'success',
         message: 'Contact Saved'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION: UPDATE MEMBER DETAILS
+    if (data.action === 'updateMemberDetails') {
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
+      var rowNumber = data.id + 1; // id is 0-based index from values array, so +1 for 1-based row index
+      
+      // Update Name (Column E -> 5)
+      if (data.name !== undefined) {
+        sheet.getRange(rowNumber, 5).setValue(data.name);
+      }
+      
+      // Update Comments (Column D -> 4)
+      if (data.comments !== undefined) {
+        sheet.getRange(rowNumber, 4).setValue(data.comments);
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Member Details Updated'
       })).setMimeType(ContentService.MimeType.JSON);
     }
     
@@ -124,7 +147,7 @@ function getAllContactPhoneNumbers() {
               var p = person.phoneNumbers[j].value;
               if (p) {
                 // Normalize: remove non-digits
-                phoneSet.add(p.replace(/\D/g, ''));
+                phoneSet.add(p.replace(/^\+94/, "0").replace(/\D/g, ''));
               }
             }
           }
@@ -159,4 +182,3 @@ function getColorFromStatus(status) {
     default: return null; // No Color (White/Reset)
   }
 }
-```
