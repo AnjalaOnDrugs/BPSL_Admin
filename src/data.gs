@@ -1,8 +1,12 @@
+```
 function doGet() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
   var range = sheet.getDataRange();
   var values = range.getValues();
   var backgrounds = range.getBackgrounds();
+  
+  // OPTIMIZATION: Fetch all contacts once to avoid N+1 API calls
+  var myContactsPhoneNumbers = getAllContactPhoneNumbers();
   
   var result = [];
   
@@ -13,15 +17,27 @@ function doGet() {
     var cellColor = bgColors[4]; // Column E (Birthday) background
     
     var derivedStatus = getStatusFromColor(cellColor);
+    var phone = row[6];
+    var isSaved = false;
+
+    // Check if contact exists using our pre-fetched set
+    if (phone) {
+      // Normalize phone for comparison (remove spaces, dashes)
+      var cleanPhone = phone.toString().replace(/\D/g, '');
+      if (myContactsPhoneNumbers.has(cleanPhone)) {
+        isSaved = true;
+      }
+    }
 
     result.push({
       id: i,
       name: row[4],
-      phone: row[6],
+      phone: phone,
       status: derivedStatus,
       dateAdded: row[0],
       birthday: row[5],
-      bias: row[9] // Column J is index 9
+      bias: row[9], // Column J is index 9
+      isSaved: isSaved
     });
   }
   
@@ -33,9 +49,37 @@ function doGet() {
 
 function doPost(e) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
     var data = JSON.parse(e.postData.contents);
     
+    // ACTION: SAVE CONTACT
+    if (data.action === 'saveContact') {
+      var name = data.name || 'Unknown';
+      var phone = data.phone;
+      
+      if (!phone) {
+        throw new Error("Phone number is required");
+      }
+      
+      // Create contact using People API
+      var nameParts = name.split(' ');
+      var firstName = nameParts[0];
+      var lastName = nameParts.slice(1).join(' ') || '';
+      
+      var contactResource = {
+        names: [{ givenName: firstName, familyName: lastName }],
+        phoneNumbers: [{ value: phone }]
+      };
+      
+      People.People.createContact(contactResource);
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Contact Saved'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACTION: UPDATE STATUS (Default)
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
     var rowNumber = data.id + 1; // We sent the row number from React
     var newStatus = data.status;
     var color = getColorFromStatus(newStatus);
@@ -58,6 +102,44 @@ function doPost(e) {
 
 // --- HELPERS ---
 
+function getAllContactPhoneNumbers() {
+  var phoneSet = new Set();
+  var pageToken = null;
+  
+  try {
+    do {
+      // List 'personFields' must be specified. We need phoneNumbers.
+      var response = People.People.Connections.list('people/me', {
+        personFields: 'phoneNumbers',
+        pageSize: 1000,
+        pageToken: pageToken
+      });
+      
+      var connections = response.connections;
+      if (connections) {
+        for (var i = 0; i < connections.length; i++) {
+          var person = connections[i];
+          if (person.phoneNumbers) {
+            for (var j = 0; j < person.phoneNumbers.length; j++) {
+              var p = person.phoneNumbers[j].value;
+              if (p) {
+                // Normalize: remove non-digits
+                phoneSet.add(p.replace(/\D/g, ''));
+              }
+            }
+          }
+        }
+      }
+      pageToken = response.nextPageToken;
+    } while (pageToken);
+  } catch (e) {
+    // If People API is not enabled or fails, we just return empty set so app doesn't crash
+    console.error("Failed to fetch contacts: " + e.toString());
+  }
+  
+  return phoneSet;
+}
+
 function getStatusFromColor(hex) {
   if (!hex) return "Not Contacted";
   hex = hex.toLowerCase();
@@ -77,3 +159,4 @@ function getColorFromStatus(status) {
     default: return null; // No Color (White/Reset)
   }
 }
+```

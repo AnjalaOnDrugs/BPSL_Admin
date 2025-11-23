@@ -20,7 +20,9 @@ import {
   Gift,
   Sparkles,
   LayoutDashboard,
-  Wand2
+  Wand2,
+  UserPlus,
+  Check
 } from 'lucide-react';
 import BirthdayCardGenerator from './BirthdayCardGenerator';
 
@@ -89,6 +91,36 @@ const App = () => {
     } catch (error) {
       console.error("Update failed", error);
       alert("Failed to save to Google Sheet.");
+    }
+  };
+
+  // --- SAVE CONTACT ---
+  const handleSaveContact = async (member) => {
+    if (!member.phone) {
+      alert("No phone number to save.");
+      return;
+    }
+
+    try {
+      // Optimistic update
+      const updatedData = data.map(m => m.id === member.id ? { ...m, isSaved: true } : m);
+      setData(updatedData);
+      if (selectedMember && selectedMember.id === member.id) {
+        setSelectedMember(prev => ({ ...prev, isSaved: true }));
+      }
+
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: 'saveContact', name: member.name, phone: member.phone }),
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" }
+      });
+
+      alert("Contact save request sent!");
+
+    } catch (error) {
+      console.error("Save contact failed", error);
+      alert("Failed to save contact.");
     }
   };
 
@@ -462,6 +494,22 @@ const App = () => {
                 <div>
                   <h2 className="text-2xl text-white font-light">{selectedMember.name}</h2>
                   <p className="text-cyan-500 font-mono mt-1">{selectedMember.phone}</p>
+
+                  {/* Contact Status Badge */}
+                  <div className="mt-2">
+                    {selectedMember.isSaved ? (
+                      <span className="inline-flex items-center text-green-500 text-xs font-bold uppercase tracking-wider bg-green-500/10 px-2 py-1 rounded-full">
+                        <Check size={12} className="mr-1" /> Contact Saved
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleSaveContact(selectedMember)}
+                        className="inline-flex items-center text-pink-400 hover:text-pink-300 text-xs font-bold uppercase tracking-wider bg-pink-500/10 hover:bg-pink-500/20 px-2 py-1 rounded-full transition-colors"
+                      >
+                        <UserPlus size={12} className="mr-1" /> Save Contact
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <button onClick={() => setSelectedMember(null)} className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
                   <X size={24} />
