@@ -172,10 +172,21 @@ const App = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-black text-gray-100 font-sans selection:bg-pink-500 selection:text-white overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-black text-gray-100 font-sans selection:bg-pink-500 selection:text-white overflow-hidden">
 
-      {/* --- SIDEBAR --- */}
-      <nav className="w-20 h-full flex flex-col items-center py-8 border-r border-gray-900/50 bg-black z-20 shadow-2xl relative">
+      {/* --- NAVIGATION --- */}
+      {/* Mobile: Bottom Fixed Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 h-16 flex flex-row items-center justify-around border-t border-gray-900/50 bg-black z-20 shadow-2xl md:hidden">
+        <NavIcon icon={<User size={20} />} active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+        <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+        <NavIcon icon={<Users size={20} />} active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
+        <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => setActiveTab('edit')} />
+        <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => setActiveTab('birthdays')} />
+        <NavIcon icon={<Settings size={20} />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+      </nav>
+
+      {/* Desktop: Left Sidebar Navigation */}
+      <nav className="hidden md:flex w-20 h-full flex-col items-center py-8 border-r border-gray-900/50 bg-black z-20 shadow-2xl relative">
         {/* Glow Strip */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/4 bg-gradient-to-b from-transparent via-pink-900/40 to-transparent blur-sm"></div>
 
@@ -194,7 +205,7 @@ const App = () => {
       </nav>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 relative overflow-y-auto">
+      <main className="flex-1 relative overflow-y-auto pb-20 md:pb-0">
         {/* Background Gradients */}
         <div className="fixed top-0 left-0 w-full h-full pointer-events-none">
           <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-pink-600/10 rounded-full blur-[100px]"></div>
@@ -263,7 +274,7 @@ const App = () => {
                   <Cake size={24} />
                 </div>
                 <h3 className="text-xs tracking-widest text-pink-200/70 uppercase mb-8">Upcoming Birthdays</h3>
-                <div className="space-y-6 border-l border-cyan-900/50 ml-2 pl-6 relative">
+                <div className="space-y-6 border-l border-cyan-900/50 ml-2 pl-6 relative mb-6">
                   {upcomingBirthdaysPreview.map((user, i) => {
                     const date = new Date(user.birthday);
                     const month = date.toLocaleString('default', { month: 'short' });
@@ -281,11 +292,11 @@ const App = () => {
                     );
                   })}
                 </div>
-              </div>
-              <div className="mt-8 flex justify-end">
-                <button onClick={() => setActiveTab('birthdays')} className="flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
-                  View Full Timeline <ArrowRight size={14} className="ml-1" />
-                </button>
+                <div className="flex justify-end">
+                  <button onClick={() => setActiveTab('birthdays')} className="flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
+                    View Full Timeline <ArrowRight size={14} className="ml-1" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
