@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import {
   User,
   Users,
@@ -26,7 +26,10 @@ import {
   Save,
   MessageSquare,
   Star,
-  MessageCircle
+  MessageCircle,
+  Plus,
+  Trash2,
+  Bell
 } from 'lucide-react';
 import BirthdayCardGenerator from './BirthdayCardGenerator';
 import WhatsappModal from './WhatsappModal';
@@ -59,10 +62,14 @@ const App = () => {
   const [editComments, setEditComments] = useState('');
 
   // WhatsApp & Admin State
-  const [whatsappConfig, setWhatsappConfig] = useState(null);
+  const [whatsappConfig, setWhatsappConfig] = useState({
+    initialMessages: [],
+    categories: []
+  });
   const [showWhatsappModal, setShowWhatsappModal] = useState(false);
   const [adminName, setAdminName] = useState('');
   const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [notificationEnabled, setNotificationEnabled] = useState(false);
 
   useEffect(() => {
     const savedName = localStorage.getItem('bpsl_admin_name');
@@ -88,7 +95,14 @@ const App = () => {
       if (json.status === 'success') {
         setData(json.data);
         if (json.whatsappConfig) {
-          setWhatsappConfig(json.whatsappConfig);
+          setWhatsappConfig({
+            initialMessages: [],
+            categories: [],
+            ...json.whatsappConfig
+          });
+        }
+        if (json.notificationEnabled !== undefined) {
+          setNotificationEnabled(json.notificationEnabled);
         }
         setConnectionStatus('connected');
         setLastRefreshed(new Date());
@@ -153,7 +167,6 @@ const App = () => {
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
-      alert("Details saved!");
     } catch (error) {
       console.error("Update details failed", error);
       alert("Failed to save details.");
@@ -182,8 +195,6 @@ const App = () => {
         headers: { "Content-Type": "text/plain" }
       });
 
-      alert("Contact save request sent!");
-
     } catch (error) {
       console.error("Save contact failed", error);
       alert("Failed to save contact.");
@@ -201,7 +212,6 @@ const App = () => {
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
-      alert("WhatsApp configuration saved!");
     } catch (error) {
       console.error("Save config failed", error);
       alert("Failed to save configuration.");
@@ -214,6 +224,27 @@ const App = () => {
       setShowNamePrompt(false);
     } else {
       alert("Please enter your name.");
+    }
+  };
+
+  // --- NOTIFICATION SETUP ---
+  // --- NOTIFICATION SETUP ---
+  const handleToggleNotifications = async (enabled) => {
+    // Optimistic update
+    setNotificationEnabled(enabled);
+
+    try {
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: 'setNotifications', enabled: enabled }),
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" }
+      });
+      // Since no-cors, we can't read response, but we assume success or catch error
+    } catch (error) {
+      console.error("Toggle notifications failed", error);
+      alert("Failed to update notification settings.");
+      setNotificationEnabled(!enabled); // Revert on error
     }
   };
 
@@ -299,137 +330,145 @@ const App = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-black text-gray-100 font-sans selection:bg-pink-500 selection:text-white overflow-hidden">
+    <div className="flex h-screen bg-black font-sans text-gray-300 overflow-hidden selection:bg-pink-500/30">
 
-      {/* --- NAVIGATION --- */}
-      {/* Mobile: Bottom Fixed Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 flex flex-row items-center justify-around border-t border-gray-900/50 bg-black z-20 shadow-2xl md:hidden">
-        <NavIcon icon={<User size={20} />} active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+      {/* MOBILE NAV */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 flex justify-around items-center z-50 px-2">
         <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
         <NavIcon icon={<Users size={20} />} active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
-        <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => setActiveTab('edit')} />
         <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => setActiveTab('birthdays')} />
-        <NavIcon icon={<Settings size={20} />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
-      </nav>
+        <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => setActiveTab('edit')} />
+      </div>
 
-      {/* Desktop: Left Sidebar Navigation */}
-      <nav className="hidden md:flex w-20 h-full flex-col items-center py-8 border-r border-gray-900/50 bg-black z-20 shadow-2xl relative">
-        {/* Glow Strip */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/4 bg-gradient-to-b from-transparent via-pink-900/40 to-transparent blur-sm"></div>
-
-        <div className="flex flex-col space-y-10 mt-10">
-          <NavIcon icon={<User size={24} />} active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-          <NavIcon icon={<LayoutDashboard size={24} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <NavIcon icon={<Users size={24} />} active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
-          <NavIcon icon={<Edit3 size={24} />} active={activeTab === 'edit'} onClick={() => setActiveTab('edit')} />
-          <NavIcon icon={<Cake size={24} />} active={activeTab === 'birthdays'} onClick={() => setActiveTab('birthdays')} />
-          <NavIcon icon={<Settings size={24} />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+      {/* DESKTOP SIDEBAR */}
+      <div className="hidden md:flex flex-col w-20 bg-gray-900 border-r border-gray-800 items-center py-8 space-y-8 z-50">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <span className="font-bold text-white text-xl">N</span>
         </div>
-
-        <div className="mt-auto mb-4">
-          <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+        <div className="flex flex-col space-y-4 w-full px-2">
+          <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <NavIcon icon={<Users size={20} />} active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
+          <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => setActiveTab('birthdays')} />
+          <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => setActiveTab('edit')} />
         </div>
-      </nav>
-
-      {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 relative overflow-y-auto pb-20 md:pb-0">
-        {/* Background Gradients */}
-        <div className="fixed top-0 left-0 w-full h-full pointer-events-none">
-          <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-pink-600/10 rounded-full blur-[100px]"></div>
-          <div className="absolute bottom-[-10%] left-[10%] w-96 h-96 bg-cyan-600/10 rounded-full blur-[100px]"></div>
+        <div className="mt-auto pb-4">
+          <button className="p-3 text-gray-600 hover:text-gray-400 transition-colors">
+            <Settings size={20} />
+          </button>
         </div>
+      </div>
 
-        <div className="p-4 md:p-8 max-w-5xl mx-auto relative z-10">
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 p-8 overflow-y-auto pb-24 md:pb-8 relative">
 
-          {/* Header */}
-          <header className="mb-10 flex justify-between items-center">
-            <h1 className="text-xl tracking-[0.2em] text-pink-200/80 font-light uppercase">
-              {activeTab === 'dashboard' ? 'Dashboard' :
-                activeTab === 'birthdays' ? 'Celebration Timeline' : 'Members'}
+        {/* Header */}
+        <header className="flex justify-between items-center mb-12">
+          <div>
+            <h1 className="text-4xl font-thin text-white tracking-tight">
+              Good Evening, <span className="text-cyan-400 font-normal">{adminName || 'Admin'}</span>
             </h1>
-            {loading && <Loader className="animate-spin text-cyan-500" size={20} />}
-          </header>
-
-          {/* ==================== DASHBOARD VIEW ==================== */}
-          {activeTab === 'dashboard' && (
-            <div className="space-y-8 animate-in fade-in duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                {/* KPI Card */}
-                <div
-                  onClick={() => { setFilter('Pending'); setActiveTab('members'); }}
-                  className="bg-gray-900/40 backdrop-blur-md border border-gray-800 p-6 rounded-sm relative group hover:border-pink-500/30 transition-colors duration-500 cursor-pointer"
-                >
-                  <div className="absolute top-4 right-4 text-gray-500 group-hover:text-pink-400 transition-colors">
-                    <Edit3 size={20} />
-                  </div>
-                  <div className="flex items-baseline space-x-3 mt-4">
-                    <span className="text-6xl font-light text-white">{waitingCount}</span>
-                    <span className="text-lg tracking-widest text-gray-400 uppercase">Waiting</span>
-                  </div>
-                  <div className="absolute bottom-4 right-4 flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
-                    View <ArrowRight size={14} className="ml-1" />
-                  </div>
-                </div>
-
-                {/* Recently Added */}
-                <div className="bg-gray-900/40 backdrop-blur-md border border-gray-800 p-6 rounded-sm relative">
-                  <div className="absolute top-4 right-4 text-gray-500">
-                    <Users size={20} />
-                  </div>
-                  <h3 className="text-xs tracking-widest text-pink-200/70 uppercase mb-6">Recently Added</h3>
-                  <div className="space-y-4">
-                    {recentlyAdded.map((user, i) => (
-                      <div key={user.id || i} className="flex justify-between items-center border-b border-gray-800/50 pb-2 last:border-0">
-                        <div>
-                          <div className="text-sm text-gray-200">{user.name}</div>
-                          <div className="text-xs text-gray-500 font-mono">{user.phone}</div>
-                        </div>
-                        <button onClick={() => setSelectedMember(user)} className="text-cyan-400 text-xs hover:text-white">View</button>
-                      </div>
-                    ))}
-                  </div>
-                  <button onClick={() => setActiveTab('members')} className="absolute bottom-4 right-4 flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
-                    View <ArrowRight size={14} className="ml-1" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Bottom Row: Birthdays Preview */}
-              <div className="bg-gray-900/40 backdrop-blur-md border border-gray-800 p-8 rounded-sm relative">
-                <div className="absolute top-6 right-6 text-pink-400">
-                  <Cake size={24} />
-                </div>
-                <h3 className="text-xs tracking-widest text-pink-200/70 uppercase mb-8">Upcoming Birthdays</h3>
-                <div className="space-y-6 border-l border-cyan-900/50 ml-2 pl-6 relative mb-6">
-                  {upcomingBirthdaysPreview.map((user, i) => {
-                    const date = new Date(user.birthday);
-                    const month = date.toLocaleString('default', { month: 'short' });
-                    const day = date.getDate();
-                    return (
-                      <div key={user.id || i} className="relative group cursor-pointer" onClick={() => setSelectedMember(user)}>
-                        <div className="absolute -left-[27.5px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-xs font-bold text-cyan-500 mr-3 uppercase">{month} {day}</span>
-                            <span className="text-gray-300 font-light">{user.name}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-end">
-                  <button onClick={() => setActiveTab('birthdays')} className="flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
-                    View Full Timeline <ArrowRight size={14} className="ml-1" />
-                  </button>
-                </div>
-              </div>
+            <p className="text-gray-500 mt-2 flex items-center text-sm">
+              {loading ? (
+                <><Loader size={14} className="animate-spin mr-2" /> Syncing...</>
+              ) : (
+                <>
+                  {connectionStatus === 'connected' ? <Wifi size={14} className="mr-2 text-green-500" /> : <WifiOff size={14} className="mr-2 text-red-500" />}
+                  {connectionStatus === 'connected' ? 'System Online' : 'Connection Error'}
+                  <span className="mx-2">-</span>
+                  {lastRefreshed ? `Last synced: ${lastRefreshed.toLocaleTimeString()}` : ''}
+                </>
+              )}
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <div className="text-right">
+              <div className="text-3xl font-bold text-white">{data.length}</div>
+              <div className="text-xs text-gray-500 uppercase tracking-widest">Total Members</div>
             </div>
-          )}
+          </div>
+        </header>
 
-          {/* ==================== MEMBERS VIEW ==================== */}
-          {activeTab === 'members' && (
+        {/* ==================== DASHBOARD VIEW ==================== */}
+        {activeTab === 'dashboard' && (
+          <div className="animate-in fade-in duration-500 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* KPI Card */}
+              <div
+                onClick={() => { setFilter('Pending'); setActiveTab('members'); }}
+                className="bg-gray-900/40 backdrop-blur-md border border-gray-800 p-6 rounded-sm relative group hover:border-pink-500/30 transition-colors duration-500 cursor-pointer"
+              >
+                <div className="absolute top-4 right-4 text-gray-500 group-hover:text-pink-400 transition-colors">
+                  <Edit3 size={20} />
+                </div>
+                <div className="flex items-baseline space-x-3 mt-4">
+                  <span className="text-6xl font-light text-white">{waitingCount}</span>
+                  <span className="text-lg tracking-widest text-gray-400 uppercase">Waiting</span>
+                </div>
+                <div className="absolute bottom-4 right-4 flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
+                  View <ArrowRight size={14} className="ml-1" />
+                </div>
+              </div >
+
+              {/* Recently Added */}
+              <div className="bg-gray-900/40 backdrop-blur-md border border-gray-800 p-6 rounded-sm relative">
+                <div className="absolute top-4 right-4 text-gray-500">
+                  <Users size={20} />
+                </div>
+                <h3 className="text-xs tracking-widest text-pink-200/70 uppercase mb-6">Recently Added</h3>
+                <div className="space-y-4">
+                  {recentlyAdded.map((user, i) => (
+                    <div key={user.id || i} className="flex justify-between items-center border-b border-gray-800/50 pb-2 last:border-0">
+                      <div>
+                        <div className="text-sm text-gray-200">{user.name}</div>
+                        <div className="text-xs text-gray-500 font-mono">{user.phone}</div>
+                      </div>
+                      <button onClick={() => setSelectedMember(user)} className="text-cyan-400 text-xs hover:text-white">View</button>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setActiveTab('members')} className="absolute bottom-4 right-4 flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
+                  View <ArrowRight size={14} className="ml-1" />
+                </button>
+              </div >
+            </div >
+
+            {/* Bottom Row: Birthdays Preview */}
+            < div className="bg-gray-900/40 backdrop-blur-md border border-gray-800 p-8 rounded-sm relative" >
+              <div className="absolute top-6 right-6 text-pink-400">
+                <Cake size={24} />
+              </div>
+              <h3 className="text-xs tracking-widest text-pink-200/70 uppercase mb-8">Upcoming Birthdays</h3>
+              <div className="space-y-6 border-l border-cyan-900/50 ml-2 pl-6 relative mb-6">
+                {upcomingBirthdaysPreview.map((user, i) => {
+                  const date = new Date(user.birthday);
+                  const month = date.toLocaleString('default', { month: 'short' });
+                  const day = date.getDate();
+                  return (
+                    <div key={user.id || i} className="relative group cursor-pointer" onClick={() => setSelectedMember(user)}>
+                      <div className="absolute -left-[27.5px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-cyan-500 mr-3 uppercase">{month} {day}</span>
+                          <span className="text-gray-300 font-light">{user.name}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => setActiveTab('birthdays')} className="flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
+                  View Full Timeline <ArrowRight size={14} className="ml-1" />
+                </button>
+              </div>
+            </div >
+          </div >
+        )}
+
+        {/* ==================== MEMBERS VIEW ==================== */}
+        {
+          activeTab === 'members' && (
             <div className="animate-in fade-in duration-500">
               <div className="relative mb-8">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
@@ -498,7 +537,7 @@ const App = () => {
                           <Phone size={12} className="mr-1" />
                           {member.phone || '--'}
                           {member.bias && (
-                            <span className="ml-2 text-pink-500/70">• {member.bias}</span>
+                            <span className="ml-2 text-pink-500/70">â€¢ {member.bias}</span>
                           )}
                         </div>
                       </div>
@@ -516,10 +555,12 @@ const App = () => {
                 ))}
               </div>
             </div>
-          )}
+          )
+        }
 
-          {/* ==================== NEW BIRTHDAY TIMELINE VIEW ==================== */}
-          {activeTab === 'birthdays' && (
+        {/* ==================== NEW BIRTHDAY TIMELINE VIEW ==================== */}
+        {
+          activeTab === 'birthdays' && (
             <div className="animate-in fade-in duration-500 relative">
 
               {fullBirthdayTimeline.length === 0 ? (
@@ -603,12 +644,191 @@ const App = () => {
                 </div>
               )}
             </div>
-          )}
+          )
+        }
+        {/* ==================== EDIT VIEW (WhatsApp Config) ==================== */}
+        {activeTab === 'edit' && (
+          <div className="animate-in fade-in duration-500 max-w-4xl mx-auto space-y-12 pb-20">
 
-        </div>
+
+
+            {/* Initial Messages Section */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                <h3 className="text-xl font-light text-green-400 flex items-center">
+                  <MessageCircle className="mr-3" size={24} /> Initial Messages
+                </h3>
+                <button
+                  onClick={() => {
+                    const newConfig = { ...whatsappConfig };
+                    newConfig.initialMessages.push("New message template...");
+                    handleSaveWhatsappConfig(newConfig);
+                  }}
+                  className="flex items-center text-xs font-bold uppercase tracking-wider bg-green-500/10 hover:bg-green-500/20 text-green-500 px-4 py-2 rounded-full transition-colors"
+                >
+                  <Plus size={14} className="mr-2" /> Add Template
+                </button>
+              </div>
+
+              <div className="grid gap-4">
+                {whatsappConfig?.initialMessages.map((msg, i) => (
+                  <div key={i} className="group relative bg-gray-900/40 border border-gray-800 rounded-xl p-4 hover:border-green-500/30 transition-all">
+                    <textarea
+                      value={msg}
+                      onChange={(e) => {
+                        const newConfig = { ...whatsappConfig };
+                        newConfig.initialMessages[i] = e.target.value;
+                        setWhatsappConfig(newConfig); // Optimistic
+                      }}
+                      onBlur={() => handleSaveWhatsappConfig(whatsappConfig)} // Save on blur
+                      className="w-full bg-transparent text-gray-300 text-sm focus:outline-none resize-none min-h-[60px]"
+                      placeholder="Enter message template..."
+                    />
+                    <button
+                      onClick={() => {
+                        if (confirm("Delete this template?")) {
+                          const newConfig = { ...whatsappConfig };
+                          newConfig.initialMessages.splice(i, 1);
+                          handleSaveWhatsappConfig(newConfig);
+                        }
+                      }}
+                      className="absolute top-2 right-2 p-2 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <div className="mt-2 text-[10px] text-gray-600 font-mono">
+                      Use <span className="text-green-500">{`{{ Name }}`}</span> for admin name placeholder
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Questions Section */}
+            <div className="space-y-8">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                <h3 className="text-xl font-light text-pink-400 flex items-center">
+                  <MessageSquare className="mr-3" size={24} /> Questions & Categories
+                </h3>
+                <button
+                  onClick={() => {
+                    const name = prompt("Enter new category name:");
+                    if (name) {
+                      const newConfig = { ...whatsappConfig };
+                      newConfig.categories.push({ name, questions: [] });
+                      handleSaveWhatsappConfig(newConfig);
+                    }
+                  }}
+                  className="flex items-center text-xs font-bold uppercase tracking-wider bg-pink-500/10 hover:bg-pink-500/20 text-pink-500 px-4 py-2 rounded-full transition-colors"
+                >
+                  <Plus size={14} className="mr-2" /> Add Category
+                </button>
+              </div>
+
+              <div className="grid gap-8">
+                {whatsappConfig?.categories.map((cat, catIndex) => (
+                  <div key={catIndex} className="bg-gray-900/20 border border-gray-800 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <span className="text-pink-500 font-medium uppercase tracking-widest text-sm">{cat.name}</span>
+                        <span className="bg-gray-800 text-gray-500 text-[10px] px-2 py-0.5 rounded-full">{cat.questions.length} Questions</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete category "${cat.name}" and all its questions?`)) {
+                            const newConfig = { ...whatsappConfig };
+                            newConfig.categories.splice(catIndex, 1);
+                            handleSaveWhatsappConfig(newConfig);
+                          }
+                        }}
+                        className="text-gray-600 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 pl-4 border-l-2 border-gray-800">
+                      {cat.questions.map((q, qIndex) => (
+                        <div key={qIndex} className="group flex items-center gap-3">
+                          <div className="w-1.5 h-1.5 rounded-full bg-gray-700 group-hover:bg-pink-500 transition-colors"></div>
+                          <input
+                            type="text"
+                            value={q}
+                            onChange={(e) => {
+                              const newConfig = { ...whatsappConfig };
+                              newConfig.categories[catIndex].questions[qIndex] = e.target.value;
+                              setWhatsappConfig(newConfig);
+                            }}
+                            onBlur={() => handleSaveWhatsappConfig(whatsappConfig)}
+                            className="flex-1 bg-transparent border-b border-transparent focus:border-pink-500/50 text-gray-300 text-sm py-1 focus:outline-none transition-colors"
+                          />
+                          <button
+                            onClick={() => {
+                              const newConfig = { ...whatsappConfig };
+                              newConfig.categories[catIndex].questions.splice(qIndex, 1);
+                              handleSaveWhatsappConfig(newConfig);
+                            }}
+                            className="text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+
+                      <button
+                        onClick={() => {
+                          const newConfig = { ...whatsappConfig };
+                          newConfig.categories[catIndex].questions.push("New question...");
+                          handleSaveWhatsappConfig(newConfig);
+                        }}
+                        className="mt-4 flex items-center text-xs text-gray-500 hover:text-pink-400 transition-colors"
+                      >
+                        <Plus size={12} className="mr-1" /> Add Question
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Notifications Section (Moved to Bottom) */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                <h3 className="text-xl font-light text-purple-400 flex items-center">
+                  <Bell className="mr-3" size={24} /> Birthday Notifications
+                </h3>
+              </div>
+              <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-white font-medium mb-1">Daily Email Alerts</h4>
+                  <p className="text-sm text-gray-500">
+                    Receive an email at 10:00 PM if any member has a birthday tomorrow.
+                  </p>
+                </div>
+                <div className="flex items-center">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={notificationEnabled}
+                      onChange={(e) => handleToggleNotifications(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <span className="ml-3 text-sm font-medium text-gray-300">
+                      {notificationEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+
       </main >
 
-      {/* --- SIDE PANEL (Existing) --- */}
+      {/* --- SIDE PANEL --- */}
       {
         selectedMember && (
           <div className="fixed inset-0 z-50 flex justify-end">
@@ -726,38 +946,42 @@ const App = () => {
         )
       }
 
-      {showWhatsappModal && selectedMember && (
-        <WhatsappModal
-          member={selectedMember}
-          config={whatsappConfig}
-          onClose={() => setShowWhatsappModal(false)}
-          onSave={handleSaveWhatsappConfig}
-          adminName={adminName}
-        />
-      )}
+      {
+        showWhatsappModal && selectedMember && (
+          <WhatsappModal
+            member={selectedMember}
+            config={whatsappConfig}
+            onClose={() => setShowWhatsappModal(false)}
+            onSave={handleSaveWhatsappConfig}
+            adminName={adminName}
+          />
+        )
+      }
 
       {/* Name Prompt Modal */}
-      {showNamePrompt && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-800 p-8 rounded-xl max-w-md w-full shadow-2xl">
-            <h2 className="text-xl font-light text-white mb-4">Welcome, Admin</h2>
-            <p className="text-gray-400 mb-6">Please enter your name to personalize messages.</p>
-            <input
-              type="text"
-              value={adminName}
-              onChange={(e) => setAdminName(e.target.value)}
-              className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:border-cyan-500 focus:outline-none mb-6"
-              placeholder="Your Name"
-            />
-            <button
-              onClick={handleSaveAdminName}
-              className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 rounded-lg transition-colors"
-            >
-              Get Started
-            </button>
+      {
+        showNamePrompt && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-xl max-w-md w-full shadow-2xl">
+              <h2 className="text-xl font-light text-white mb-4">Welcome, Admin</h2>
+              <p className="text-gray-400 mb-6">Please enter your name to personalize messages.</p>
+              <input
+                type="text"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:border-cyan-500 focus:outline-none mb-6"
+                placeholder="Your Name"
+              />
+              <button
+                onClick={handleSaveAdminName}
+                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 rounded-lg transition-colors"
+              >
+                Get Started
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
     </div >
   );

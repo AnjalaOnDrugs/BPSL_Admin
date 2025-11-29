@@ -1,4 +1,4 @@
-
+```javascript
 function doGet() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
   var range = sheet.getDataRange();
@@ -43,10 +43,21 @@ function doGet() {
     });
   }
   
+  // Check if notification trigger exists
+  var notificationEnabled = false;
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'checkUpcomingBirthdays') {
+      notificationEnabled = true;
+      break;
+    }
+  }
+  
   return ContentService.createTextOutput(JSON.stringify({
     status: 'success',
     data: result,
-    whatsappConfig: getWhatsappConfig()
+    whatsappConfig: getWhatsappConfig(),
+    notificationEnabled: notificationEnabled
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -111,6 +122,37 @@ function doPost(e) {
         status: 'success',
         message: 'Config Saved'
       })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION: SET NOTIFICATIONS (TOGGLE)
+    if (data.action === 'setNotifications') {
+      var enabled = data.enabled;
+      
+      // Delete existing triggers first
+      var triggers = ScriptApp.getProjectTriggers();
+      for (var i = 0; i < triggers.length; i++) {
+        if (triggers[i].getHandlerFunction() === 'checkUpcomingBirthdays') {
+          ScriptApp.deleteTrigger(triggers[i]);
+        }
+      }
+      
+      if (enabled) {
+        // Create new trigger for 10:00 PM
+        ScriptApp.newTrigger('checkUpcomingBirthdays')
+            .timeBased()
+            .everyDays(1)
+            .atHour(22) // 10 PM
+            .create();
+        return ContentService.createTextOutput(JSON.stringify({
+          status: 'success',
+          message: 'Daily notifications enabled'
+        })).setMimeType(ContentService.MimeType.JSON);
+      } else {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: 'success',
+          message: 'Daily notifications disabled'
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
     }
 
     // ACTION: UPDATE STATUS (Default)
@@ -215,3 +257,59 @@ function getWhatsappConfig() {
   }
   return JSON.parse(config);
 }
+
+// --- BIRTHDAY NOTIFICATION LOGIC ---
+
+function checkUpcomingBirthdays() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
+  var data = sheet.getDataRange().getValues();
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  var upcomingBirthdays = [];
+  
+  // Skip header row
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var name = row[4]; // Column E
+    var birthdayString = row[5]; // Column F
+    var status = getStatusFromColor(sheet.getRange(i + 1, 5).getBackground()); // Check status via color
+    
+    if (status === "In Group" && birthdayString) {
+      var birthday = new Date(birthdayString);
+      if (!isNaN(birthday)) {
+        if (birthday.getMonth() === tomorrow.getMonth() && birthday.getDate() === tomorrow.getDate()) {
+          upcomingBirthdays.push({
+            name: name,
+            age: tomorrow.getFullYear() - birthday.getFullYear()
+          });
+        }
+      }
+    }
+  }
+  
+  if (upcomingBirthdays.length > 0) {
+    sendBirthdayNotification(upcomingBirthdays);
+  }
+  
+  return upcomingBirthdays.length;
+}
+
+function sendBirthdayNotification(members) {
+  var email = Session.getActiveUser().getEmail();
+  var subject = "🎂 Upcoming Birthdays Tomorrow!";
+  var body = "The following members have birthdays tomorrow:\n\n";
+  
+  for (var i = 0; i < members.length; i++) {
+    body += "- " + members[i].name + " (Turning " + members[i].age + ")\n";
+  }
+  
+  body += "\nDon't forget to wish them!";
+  
+  MailApp.sendEmail({
+    to: email,
+    subject: subject,
+    body: body
+  });
+}
+```
