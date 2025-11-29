@@ -25,9 +25,11 @@ import {
   Check,
   Save,
   MessageSquare,
-  Star
+  Star,
+  MessageCircle
 } from 'lucide-react';
 import BirthdayCardGenerator from './BirthdayCardGenerator';
+import WhatsappModal from './WhatsappModal';
 
 // --- MOCK DATA (Fallback) ---
 const MOCK_DATA = [
@@ -56,6 +58,21 @@ const App = () => {
   const [editName, setEditName] = useState('');
   const [editComments, setEditComments] = useState('');
 
+  // WhatsApp & Admin State
+  const [whatsappConfig, setWhatsappConfig] = useState(null);
+  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+  const [adminName, setAdminName] = useState('');
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+
+  useEffect(() => {
+    const savedName = localStorage.getItem('bpsl_admin_name');
+    if (savedName) {
+      setAdminName(savedName);
+    } else {
+      setShowNamePrompt(true);
+    }
+  }, []);
+
   // --- FETCH DATA ---
   const fetchData = async () => {
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_NEW_DEPLOYMENT_ID")) {
@@ -70,6 +87,9 @@ const App = () => {
 
       if (json.status === 'success') {
         setData(json.data);
+        if (json.whatsappConfig) {
+          setWhatsappConfig(json.whatsappConfig);
+        }
         setConnectionStatus('connected');
         setLastRefreshed(new Date());
       }
@@ -167,6 +187,33 @@ const App = () => {
     } catch (error) {
       console.error("Save contact failed", error);
       alert("Failed to save contact.");
+    }
+  };
+
+  // --- SAVE WHATSAPP CONFIG ---
+  const handleSaveWhatsappConfig = async (newConfig) => {
+    setWhatsappConfig(newConfig); // Optimistic update
+
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: 'updateWhatsappConfig', config: newConfig }),
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" }
+      });
+      alert("WhatsApp configuration saved!");
+    } catch (error) {
+      console.error("Save config failed", error);
+      alert("Failed to save configuration.");
+    }
+  };
+
+  const handleSaveAdminName = () => {
+    if (adminName.trim()) {
+      localStorage.setItem('bpsl_admin_name', adminName);
+      setShowNamePrompt(false);
+    } else {
+      alert("Please enter your name.");
     }
   };
 
@@ -590,7 +637,7 @@ const App = () => {
                   <p className="text-cyan-500 font-mono mt-1">{selectedMember.phone}</p>
 
                   {/* Contact Status Badge */}
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center space-x-2">
                     {selectedMember.isSaved ? (
                       <span className="inline-flex items-center text-green-500 text-xs font-bold uppercase tracking-wider bg-green-500/10 px-2 py-1 rounded-full">
                         <Check size={12} className="mr-1" /> Contact Saved
@@ -603,6 +650,14 @@ const App = () => {
                         <UserPlus size={12} className="mr-1" /> Save Contact
                       </button>
                     )}
+
+                    {/* WhatsApp Trigger */}
+                    <button
+                      onClick={() => setShowWhatsappModal(true)}
+                      className="inline-flex items-center text-green-400 hover:text-green-300 text-xs font-bold uppercase tracking-wider bg-green-500/10 hover:bg-green-500/20 px-2 py-1 rounded-full transition-colors"
+                    >
+                      <MessageCircle size={12} className="mr-1" /> WhatsApp
+                    </button>
                   </div>
                 </div>
                 <button onClick={() => setSelectedMember(null)} className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
@@ -661,6 +716,7 @@ const App = () => {
         )
       }
 
+      {/* --- MODALS --- */}
       {
         showGenerator && selectedMember && (
           <BirthdayCardGenerator
@@ -669,6 +725,40 @@ const App = () => {
           />
         )
       }
+
+      {showWhatsappModal && selectedMember && (
+        <WhatsappModal
+          member={selectedMember}
+          config={whatsappConfig}
+          onClose={() => setShowWhatsappModal(false)}
+          onSave={handleSaveWhatsappConfig}
+          adminName={adminName}
+        />
+      )}
+
+      {/* Name Prompt Modal */}
+      {showNamePrompt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-800 p-8 rounded-xl max-w-md w-full shadow-2xl">
+            <h2 className="text-xl font-light text-white mb-4">Welcome, Admin</h2>
+            <p className="text-gray-400 mb-6">Please enter your name to personalize messages.</p>
+            <input
+              type="text"
+              value={adminName}
+              onChange={(e) => setAdminName(e.target.value)}
+              className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:border-cyan-500 focus:outline-none mb-6"
+              placeholder="Your Name"
+            />
+            <button
+              onClick={handleSaveAdminName}
+              className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 rounded-lg transition-colors"
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
+      )}
+
     </div >
   );
 };

@@ -45,7 +45,8 @@ function doGet() {
   
   return ContentService.createTextOutput(JSON.stringify({
     status: 'success',
-    data: result
+    data: result,
+    whatsappConfig: getWhatsappConfig()
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -101,6 +102,17 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
     
+    // ACTION: UPDATE WHATSAPP CONFIG
+    if (data.action === 'updateWhatsappConfig') {
+      var props = PropertiesService.getScriptProperties();
+      props.setProperty('WHATSAPP_CONFIG', JSON.stringify(data.config));
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Config Saved'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ACTION: UPDATE STATUS (Default)
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
     var rowNumber = data.id + 1; // We sent the row number from React
@@ -181,4 +193,25 @@ function getColorFromStatus(status) {
     case "No Response": return "#ffff00"; // Yellow
     default: return null; // No Color (White/Reset)
   }
+}
+
+function getWhatsappConfig() {
+  var props = PropertiesService.getScriptProperties();
+  var config = props.getProperty('WHATSAPP_CONFIG');
+  if (!config) {
+    // Default Config
+    return {
+      initialMessages: [
+        "Hi, I'm {{Name}} one of the admins of BPSL Community. Did you fill the form to be added to the community?"
+      ],
+      categories: [
+        { name: "Blackpink", questions: ["What is your favorite song?"] },
+        { name: "Jisoo", questions: [] },
+        { name: "Jennie", questions: [] },
+        { name: "Lisa", questions: [] },
+        { name: "Rosé", questions: [] }
+      ]
+    };
+  }
+  return JSON.parse(config);
 }
