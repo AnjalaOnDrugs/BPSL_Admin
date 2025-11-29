@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import BirthdayCardGenerator from './BirthdayCardGenerator';
 import WhatsappModal from './WhatsappModal';
+import useSwipe from './hooks/useSwipe';
 
 // --- MOCK DATA (Fallback) ---
 const MOCK_DATA = [
@@ -70,6 +71,25 @@ const App = () => {
   const [adminName, setAdminName] = useState('');
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState(false);
+
+  // --- SWIPE LOGIC ---
+  const tabOrder = ['dashboard', 'members', 'birthdays', 'edit'];
+
+  const handleSwipeLeft = () => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex < tabOrder.length - 1) {
+      setActiveTab(tabOrder[currentIndex + 1]);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabOrder[currentIndex - 1]);
+    }
+  };
+
+  const swipeHandlers = useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight });
 
   useEffect(() => {
     const savedName = localStorage.getItem('bpsl_admin_name');
@@ -359,7 +379,7 @@ const App = () => {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-8 overflow-y-auto pb-24 md:pb-8 relative">
+      <main className="flex-1 p-8 overflow-y-auto pb-24 md:pb-8 relative" {...swipeHandlers}>
 
         {/* Header */}
         <header className="flex justify-between items-center mb-12">
