@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   User,
   Users,
@@ -58,6 +58,7 @@ const App = () => {
   const [connectionStatus, setConnectionStatus] = useState('idle');
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [showGenerator, setShowGenerator] = useState(false);
+  const mainContentRef = useRef(null);
 
   // Editable fields state
   const [editName, setEditName] = useState('');
@@ -107,6 +108,13 @@ const App = () => {
   };
 
   const swipeHandlers = useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight });
+
+  // Scroll to top on tab change
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const savedName = localStorage.getItem('bpsl_admin_name');
@@ -396,7 +404,7 @@ const App = () => {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-8 overflow-y-auto pb-24 md:pb-8 relative" {...swipeHandlers}>
+      <main ref={mainContentRef} className="flex-1 p-8 overflow-y-auto pb-24 md:pb-8 relative" {...swipeHandlers}>
 
         {/* Header */}
         <header className="flex justify-between items-center mb-12">
