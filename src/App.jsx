@@ -48,7 +48,8 @@ const MOCK_DATA = [
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDTDpuTGNZlFuKBdmqbAbdEFzUDgWqNG4QXWNVqb4g-cXv_PISguKITFZxhLZ5jMTtw/exec";
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'members', 'birthdays'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'members', 'birthdays', 'edit'
+  const [direction, setDirection] = useState('none'); // 'left', 'right', 'none'
   const [selectedMember, setSelectedMember] = useState(null); // For side panel
   const [data, setData] = useState(MOCK_DATA);
   const [loading, setLoading] = useState(false);
@@ -75,9 +76,24 @@ const App = () => {
   // --- SWIPE LOGIC ---
   const tabOrder = ['dashboard', 'members', 'birthdays', 'edit'];
 
+  const changeTab = (newTab) => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    const newIndex = tabOrder.indexOf(newTab);
+
+    if (newIndex > currentIndex) {
+      setDirection('left'); // Content moves left (comes from right)
+    } else if (newIndex < currentIndex) {
+      setDirection('right'); // Content moves right (comes from left)
+    } else {
+      setDirection('none');
+    }
+    setActiveTab(newTab);
+  };
+
   const handleSwipeLeft = () => {
     const currentIndex = tabOrder.indexOf(activeTab);
     if (currentIndex < tabOrder.length - 1) {
+      setDirection('left');
       setActiveTab(tabOrder[currentIndex + 1]);
     }
   };
@@ -85,6 +101,7 @@ const App = () => {
   const handleSwipeRight = () => {
     const currentIndex = tabOrder.indexOf(activeTab);
     if (currentIndex > 0) {
+      setDirection('right');
       setActiveTab(tabOrder[currentIndex - 1]);
     }
   };
@@ -354,10 +371,10 @@ const App = () => {
 
       {/* MOBILE NAV */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 flex justify-around items-center z-50 px-2">
-        <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-        <NavIcon icon={<Users size={20} />} active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
-        <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => setActiveTab('birthdays')} />
-        <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => setActiveTab('edit')} />
+        <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => changeTab('dashboard')} />
+        <NavIcon icon={<Users size={20} />} active={activeTab === 'members'} onClick={() => changeTab('members')} />
+        <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => changeTab('birthdays')} />
+        <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => changeTab('edit')} />
       </div>
 
       {/* DESKTOP SIDEBAR */}
@@ -366,10 +383,10 @@ const App = () => {
           <span className="font-bold text-white text-xl">N</span>
         </div>
         <div className="flex flex-col space-y-4 w-full px-2">
-          <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <NavIcon icon={<Users size={20} />} active={activeTab === 'members'} onClick={() => setActiveTab('members')} />
-          <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => setActiveTab('birthdays')} />
-          <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => setActiveTab('edit')} />
+          <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => changeTab('dashboard')} />
+          <NavIcon icon={<Users size={20} />} active={activeTab === 'members'} onClick={() => changeTab('members')} />
+          <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => changeTab('birthdays')} />
+          <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => changeTab('edit')} />
         </div>
         <div className="mt-auto pb-4">
           <button className="p-3 text-gray-600 hover:text-gray-400 transition-colors">
@@ -410,12 +427,12 @@ const App = () => {
 
         {/* ==================== DASHBOARD VIEW ==================== */}
         {activeTab === 'dashboard' && (
-          <div className="animate-in fade-in duration-500 space-y-6">
+          <div key="dashboard" className={`space-y-6 ${direction === 'left' ? 'animate-slide-left' : direction === 'right' ? 'animate-slide-right' : 'animate-in fade-in duration-500'}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* KPI Card */}
               <div
-                onClick={() => { setFilter('Pending'); setActiveTab('members'); }}
+                onClick={() => { setFilter('Pending'); changeTab('members'); }}
                 className="bg-gray-900/40 backdrop-blur-md border border-gray-800 p-6 rounded-sm relative group hover:border-pink-500/30 transition-colors duration-500 cursor-pointer"
               >
                 <div className="absolute top-4 right-4 text-gray-500 group-hover:text-pink-400 transition-colors">
@@ -447,7 +464,7 @@ const App = () => {
                     </div>
                   ))}
                 </div>
-                <button onClick={() => setActiveTab('members')} className="absolute bottom-4 right-4 flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
+                <button onClick={() => changeTab('members')} className="absolute bottom-4 right-4 flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
                   View <ArrowRight size={14} className="ml-1" />
                 </button>
               </div >
@@ -478,7 +495,7 @@ const App = () => {
                 })}
               </div>
               <div className="flex justify-end">
-                <button onClick={() => setActiveTab('birthdays')} className="flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
+                <button onClick={() => changeTab('birthdays')} className="flex items-center text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">
                   View Full Timeline <ArrowRight size={14} className="ml-1" />
                 </button>
               </div>
@@ -489,7 +506,7 @@ const App = () => {
         {/* ==================== MEMBERS VIEW ==================== */}
         {
           activeTab === 'members' && (
-            <div className="animate-in fade-in duration-500">
+            <div key="members" className={`${direction === 'left' ? 'animate-slide-left' : direction === 'right' ? 'animate-slide-right' : 'animate-in fade-in duration-500'}`}>
               <div className="relative mb-8">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                 <input
@@ -581,7 +598,7 @@ const App = () => {
         {/* ==================== NEW BIRTHDAY TIMELINE VIEW ==================== */}
         {
           activeTab === 'birthdays' && (
-            <div className="animate-in fade-in duration-500 relative">
+            <div key="birthdays" className={`relative ${direction === 'left' ? 'animate-slide-left' : direction === 'right' ? 'animate-slide-right' : 'animate-in fade-in duration-500'}`}>
 
               {fullBirthdayTimeline.length === 0 ? (
                 <div className="text-center text-gray-500 mt-20">No birthday data available.</div>
@@ -668,7 +685,7 @@ const App = () => {
         }
         {/* ==================== EDIT VIEW (WhatsApp Config) ==================== */}
         {activeTab === 'edit' && (
-          <div className="animate-in fade-in duration-500 max-w-4xl mx-auto space-y-12 pb-20">
+          <div key="edit" className={`max-w-4xl mx-auto space-y-12 pb-20 ${direction === 'left' ? 'animate-slide-left' : direction === 'right' ? 'animate-slide-right' : 'animate-in fade-in duration-500'}`}>
 
 
 
