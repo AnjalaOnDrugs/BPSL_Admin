@@ -224,7 +224,7 @@ function getStatusFromColor(hex) {
   // Colors must match the getColorFromStatus function
   if (hex === "#00ff00") return "In Group";
   if (hex === "#ff0000") return "Removed";
-  if (hex === "#ffff00") return "No Response";
+  if (hex === "#ffff00") return "Contacted";
   return "Not Contacted";
 }
 
@@ -232,7 +232,7 @@ function getColorFromStatus(status) {
   switch (status) {
     case "In Group": return "#00ff00"; // Green
     case "Removed": return "#ff0000"; // Red
-    case "No Response": return "#ffff00"; // Yellow
+    case "Contacted": return "#ffff00"; // Yellow
     default: return null; // No Color (White/Reset)
   }
 }

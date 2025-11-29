@@ -38,7 +38,7 @@ import WhatsappModal from './WhatsappModal';
 const MOCK_DATA = [
   { id: 2, name: "Anjala Botejue", phone: "0714545776", status: "In Group", dateAdded: "2023-10-01", birthday: "1990-10-02", bias: "Lisa", score: 5, comments: "Active member" },
   { id: 3, name: "Hashan Perera", phone: "0714500000", status: "Removed", dateAdded: "2023-10-05", birthday: "1995-10-02", bias: "Jennie", score: 2, comments: "Removed due to inactivity" },
-  { id: 4, name: "Kamal Gunaratne", phone: "0771234567", status: "No Response", dateAdded: "2023-09-28", birthday: "1988-12-15", bias: "Rose", score: 3, comments: "No reply yet" },
+  { id: 4, name: "Kamal Gunaratne", phone: "0771234567", status: "Contacted", dateAdded: "2023-09-28", birthday: "1988-12-15", bias: "Rose", score: 3, comments: "No reply yet" },
   { id: 5, name: "Nimali Silva", phone: "0709988776", status: "Not Contacted", dateAdded: "2023-10-06", birthday: "1992-05-20", bias: "Jisoo", score: 4, comments: "To be contacted" },
   { id: 6, name: "Dilshan M", phone: "0711111111", status: "In Group", dateAdded: "2023-01-01", birthday: "1994-01-15", bias: "OT4", score: 1, comments: "Low score" },
 ];
@@ -259,7 +259,7 @@ const App = () => {
       if (!matchesSearch) return false;
 
       if (filter === 'Main') return member.status === 'In Group';
-      if (filter === 'Contacted') return member.status === 'No Response';
+      if (filter === 'Contacted') return member.status === 'Contacted';
       if (filter === 'Pending') return member.status === 'Not Contacted';
       if (filter === 'Removed') return member.status === 'Removed';
 
@@ -267,7 +267,7 @@ const App = () => {
     });
   }, [data, searchTerm, filter]);
 
-  const waitingCount = data.filter(m => m.status === 'No Response' || m.status === 'Not Contacted').length;
+  const waitingCount = data.filter(m => m.status === 'Contacted' || m.status === 'Not Contacted').length;
 
   const recentlyAdded = [...data]
     .sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0))
@@ -324,7 +324,7 @@ const App = () => {
     switch (status) {
       case 'In Group': return 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]';
       case 'Removed': return 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]';
-      case 'No Response': return 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]';
+      case 'Contacted': return 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]';
       default: return 'bg-gray-500';
     }
   };
@@ -485,14 +485,14 @@ const App = () => {
               <div className="flex flex-wrap justify-center gap-4 mb-8">
                 {[
                   { id: 'Main', label: 'In Group', color: 'text-green-500' },
-                  { id: 'Contacted', label: 'No Response', color: 'text-yellow-400' },
+                  { id: 'Contacted', label: 'Contacted', color: 'text-yellow-400' },
                   { id: 'Pending', label: 'Not Contacted', color: 'text-gray-400' },
                   { id: 'Removed', label: 'Removed', color: 'text-red-500' }
                 ].map(tab => {
                   // Calculate count for this tab
                   const count = data.filter(m => {
                     if (tab.id === 'Main') return m.status === 'In Group';
-                    if (tab.id === 'Contacted') return m.status === 'No Response';
+                    if (tab.id === 'Contacted') return m.status === 'Contacted';
                     if (tab.id === 'Pending') return m.status === 'Not Contacted';
                     if (tab.id === 'Removed') return m.status === 'Removed';
                     return false;
@@ -1013,7 +1013,7 @@ const DetailItem = ({ icon, label, value }) => (
 const StatusSelector = ({ currentStatus, onUpdate }) => {
   const statuses = [
     { id: 'Not Contacted', label: 'Not Contacted', color: 'bg-white' },
-    { id: 'No Response', label: 'No Response', color: 'bg-yellow-400' },
+    { id: 'Contacted', label: 'Contacted', color: 'bg-yellow-400' },
     { id: 'In Group', label: 'In Group', color: 'bg-green-500' },
     { id: 'Removed', label: 'Removed', color: 'bg-red-500' },
   ];
