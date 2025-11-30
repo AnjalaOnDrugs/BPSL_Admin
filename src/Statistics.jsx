@@ -15,6 +15,7 @@ import {
     Legend
 } from 'recharts';
 import { Sparkles, Users, Activity, TrendingUp } from 'lucide-react';
+import './chart-overrides.css';
 
 const Statistics = ({ data }) => {
 
@@ -95,27 +96,20 @@ const Statistics = ({ data }) => {
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
             {/* Header Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Header Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl flex items-center justify-between">
                     <div>
-                        <p className="text-gray-500 text-xs uppercase tracking-wider">Total Members</p>
-                        <h3 className="text-3xl font-bold text-white mt-1">{data.length}</h3>
+                        <p className="text-gray-500 text-xs uppercase tracking-wider">Total Members (In Group)</p>
+                        <h3 className="text-3xl font-bold text-white mt-1">
+                            {data.filter(m => m.status === 'In Group').length}
+                        </h3>
                     </div>
                     <div className="p-3 bg-cyan-500/10 rounded-full text-cyan-400">
                         <Users size={24} />
                     </div>
                 </div>
-                <div className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl flex items-center justify-between">
-                    <div>
-                        <p className="text-gray-500 text-xs uppercase tracking-wider">Avg Score</p>
-                        <h3 className="text-3xl font-bold text-white mt-1">
-                            {(data.reduce((acc, m) => acc + (m.score || 0), 0) / (data.length || 1)).toFixed(1)}
-                        </h3>
-                    </div>
-                    <div className="p-3 bg-purple-500/10 rounded-full text-purple-400">
-                        <Activity size={24} />
-                    </div>
-                </div>
+
                 <div className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl flex items-center justify-between">
                     <div>
                         <p className="text-gray-500 text-xs uppercase tracking-wider">Top Bias</p>
@@ -138,15 +132,15 @@ const Statistics = ({ data }) => {
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={biasData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                            <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                            <YAxis stroke="#9ca3af" tick={{ fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                            <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: '#e5e7eb' }} axisLine={false} tickLine={false} />
+                            <YAxis stroke="#9ca3af" tick={{ fill: '#e5e7eb' }} axisLine={false} tickLine={false} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }}
                                 cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                             />
                             <Bar dataKey="count" radius={[4, 4, 0, 0]} animationDuration={1500}>
                                 {biasData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    <Cell key={`cell-${index}`} fill={entry.fill} strokeWidth={0} />
                                 ))}
                             </Bar>
                         </BarChart>
@@ -173,7 +167,7 @@ const Statistics = ({ data }) => {
                                     dataKey="value"
                                 >
                                     {statusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
                                     ))}
                                 </Pie>
                                 <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }} />
@@ -192,8 +186,8 @@ const Statistics = ({ data }) => {
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={scoreData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                                <XAxis dataKey="score" stroke="#9ca3af" tick={{ fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                                <YAxis stroke="#9ca3af" tick={{ fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="score" stroke="#9ca3af" tick={{ fill: '#e5e7eb' }} axisLine={false} tickLine={false} />
+                                <YAxis stroke="#9ca3af" tick={{ fill: '#e5e7eb' }} axisLine={false} tickLine={false} />
                                 <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }} />
                                 <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} animationDuration={1500} />
                             </BarChart>
