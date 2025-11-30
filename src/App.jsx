@@ -314,7 +314,7 @@ const App = () => {
     });
   }, [data, searchTerm, filter]);
 
-  const waitingCount = data.filter(m => m.status === 'Contacted' || m.status === 'Not Contacted').length;
+  const waitingCount = data.filter(m => m.status === 'Not Contacted').length;
 
   const recentlyAdded = [...data]
     .sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0))
