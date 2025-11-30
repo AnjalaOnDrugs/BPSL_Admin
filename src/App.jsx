@@ -316,7 +316,7 @@ const App = () => {
 
   const waitingCount = data.filter(m => m.status === 'Not Contacted').length;
 
-  const recentlyAdded = [...data]
+  const recentlyAdded = [...data].filter(m => m.status === 'In Group')
     .sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0))
     .slice(0, 3);
 
