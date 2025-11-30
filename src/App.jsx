@@ -35,7 +35,8 @@ import BirthdayCardGenerator from './BirthdayCardGenerator';
 import WhatsappModal from './WhatsappModal';
 import useSwipe from './hooks/useSwipe';
 import Statistics from './Statistics';
-import { BarChart2 } from 'lucide-react';
+import LoadingScreen from './LoadingScreen';
+import { BarChart2, ShieldCheck } from 'lucide-react';
 
 // --- MOCK DATA (Fallback) ---
 const MOCK_DATA = [
@@ -48,6 +49,7 @@ const MOCK_DATA = [
 
 // --- CONFIGURATION ---
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDTDpuTGNZlFuKBdmqbAbdEFzUDgWqNG4QXWNVqb4g-cXv_PISguKITFZxhLZ5jMTtw/exec";
+const ADMIN_PHONES = ["0714548611", "0767044626", "0714545776", "0703635371"];
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'members', 'birthdays', 'edit'
@@ -128,10 +130,41 @@ const App = () => {
   }, []);
 
   // --- FETCH DATA ---
-  const fetchData = async () => {
+  const fetchData = async (force = false) => {
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_NEW_DEPLOYMENT_ID")) {
       setConnectionStatus('error');
       return;
+    }
+
+    // Check local storage first
+    if (!force) {
+      const cachedData = localStorage.getItem('bpsl_data');
+      const cachedTime = localStorage.getItem('bpsl_last_sync');
+
+      if (cachedData && cachedTime) {
+        const now = new Date();
+        const lastSync = new Date(cachedTime);
+        const diffMins = (now - lastSync) / 1000 / 60;
+
+        if (diffMins < 10) {
+          console.log("Loading from cache (less than 10 mins old)");
+          setData(JSON.parse(cachedData));
+          setLastRefreshed(lastSync);
+          setConnectionStatus('connected');
+
+          // Also load config if available
+          const cachedConfig = localStorage.getItem('bpsl_config');
+          if (cachedConfig) {
+            setWhatsappConfig(JSON.parse(cachedConfig));
+          }
+          return; // Skip network fetch
+        } else {
+          console.log("Cache expired, syncing in background...");
+          // Load old data while syncing
+          setData(JSON.parse(cachedData));
+          setLastRefreshed(lastSync);
+        }
+      }
     }
 
     setLoading(true);
@@ -141,18 +174,25 @@ const App = () => {
 
       if (json.status === 'success') {
         setData(json.data);
+        localStorage.setItem('bpsl_data', JSON.stringify(json.data));
+
+        const now = new Date();
+        setLastRefreshed(now);
+        localStorage.setItem('bpsl_last_sync', now.toISOString());
+
         if (json.whatsappConfig) {
-          setWhatsappConfig({
+          const config = {
             initialMessages: [],
             categories: [],
             ...json.whatsappConfig
-          });
+          };
+          setWhatsappConfig(config);
+          localStorage.setItem('bpsl_config', JSON.stringify(config));
         }
         if (json.notificationEnabled !== undefined) {
           setNotificationEnabled(json.notificationEnabled);
         }
         setConnectionStatus('connected');
-        setLastRefreshed(new Date());
       }
     } catch (error) {
       console.error(error);
@@ -379,6 +419,9 @@ const App = () => {
   return (
     <div className="flex h-screen bg-black font-sans text-gray-300 overflow-hidden selection:bg-pink-500/30">
 
+      {/* LOADING SCREEN */}
+      {(loading && data === MOCK_DATA) && <LoadingScreen />}
+
       {/* MOBILE NAV */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 flex justify-around items-center z-50 px-2">
         <NavIcon icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => changeTab('dashboard')} />
@@ -566,42 +609,48 @@ const App = () => {
               </div>
 
               <div className="space-y-4">
-                {filteredMembers.map((member, i) => (
-                  <div key={member.id || i} className="group flex flex-col sm:flex-row items-start sm:items-center justify-between border border-gray-800 bg-gray-900/20 p-3 rounded-md hover:border-gray-700 hover:bg-gray-900/40 transition-all duration-300 gap-3 sm:gap-0">
-                    <div className="flex items-center space-x-3 sm:space-x-4 flex-1 w-full sm:w-auto overflow-hidden">
-                      <div className="text-gray-400 group-hover:text-pink-400 transition-colors shrink-0">
-                        <User size={18} />
+                {filteredMembers.map((member, i) => {
+                  const isAdmin = ADMIN_PHONES.includes(member.phone?.toString());
+                  return (
+                    <div key={member.id || i} className={`group flex flex-col sm:flex-row items-start sm:items-center justify-between border bg-gray-900/20 p-3 rounded-md transition-all duration-300 gap-3 sm:gap-0 ${isAdmin
+                      ? 'border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)] bg-yellow-900/10 hover:bg-yellow-900/20'
+                      : 'border-gray-800 hover:border-gray-700 hover:bg-gray-900/40'
+                      }`}>
+                      <div className="flex items-center space-x-3 sm:space-x-4 flex-1 w-full sm:w-auto overflow-hidden">
+                        <div className={`transition-colors shrink-0 ${isAdmin ? 'text-yellow-500' : 'text-gray-400 group-hover:text-pink-400'}`}>
+                          {isAdmin ? <ShieldCheck size={18} /> : <User size={18} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <div className="text-gray-200 text-sm truncate font-medium">{member.name || 'Unknown'}</div>
+                            {/* Score Display */}
+                            {member.score && (
+                              <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${member.score <= 3 ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-400'}`}>
+                                {member.score}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center text-gray-500 text-xs font-mono mt-0.5">
+                            <Phone size={12} className="mr-1" />
+                            {member.phone || '--'}
+                            {member.bias && (
+                              <span className="ml-2 text-pink-500/70">{member.bias}</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <div className="text-gray-200 text-sm truncate font-medium">{member.name || 'Unknown'}</div>
-                          {/* Score Display */}
-                          {member.score && (
-                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${member.score <= 3 ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-400'}`}>
-                              {member.score}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center text-gray-500 text-xs font-mono mt-0.5">
-                          <Phone size={12} className="mr-1" />
-                          {member.phone || '--'}
-                          {member.bias && (
-                            <span className="ml-2 text-pink-500/70">{member.bias}</span>
-                          )}
-                        </div>
+                      <div className="flex items-center justify-between w-full sm:w-auto space-x-4 pl-8 sm:pl-0">
+                        <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(member.status)} transition-all duration-500 shrink-0`}></div>
+                        <button
+                          onClick={() => setSelectedMember(member)}
+                          className="bg-gradient-to-r from-cyan-900/40 to-cyan-600/20 hover:from-cyan-500 hover:to-cyan-400 text-cyan-400 hover:text-black border border-cyan-500/30 hover:border-cyan-400 px-4 py-1 rounded text-[10px] sm:text-xs uppercase tracking-wider font-medium transition-all duration-300 flex items-center shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                        >
+                          View
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between w-full sm:w-auto space-x-4 pl-8 sm:pl-0">
-                      <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(member.status)} transition-all duration-500 shrink-0`}></div>
-                      <button
-                        onClick={() => setSelectedMember(member)}
-                        className="bg-gradient-to-r from-cyan-900/40 to-cyan-600/20 hover:from-cyan-500 hover:to-cyan-400 text-cyan-400 hover:text-black border border-cyan-500/30 hover:border-cyan-400 px-4 py-1 rounded text-[10px] sm:text-xs uppercase tracking-wider font-medium transition-all duration-300 flex items-center shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                      >
-                        View
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )
