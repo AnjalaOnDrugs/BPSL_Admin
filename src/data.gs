@@ -1,4 +1,3 @@
-```javascript
 function doGet() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
   var range = sheet.getDataRange();
@@ -80,7 +79,7 @@ function doPost(e) {
       var lastName = nameParts.slice(1).join(' ') || '';
       
       var contactResource = {
-        names: [{ givenName: firstName, familyName: lastName }],
+        names: [{ givenName: firstName, familyName: lastName + " Blink"}],
         phoneNumbers: [{ value: phone }]
       };
       
@@ -297,6 +296,10 @@ function checkUpcomingBirthdays() {
 
 function sendBirthdayNotification(members) {
   var email = Session.getActiveUser().getEmail();
+  var additionalEmail = "dimanthasehan80@gmail.com";
+  // Ensure we have a valid comma-separated list
+  var recipients = email ? (email + "," + additionalEmail) : additionalEmail;
+
   var subject = "🎂 Upcoming Birthdays Tomorrow!";
   var body = "The following members have birthdays tomorrow:\n\n";
   
@@ -307,9 +310,8 @@ function sendBirthdayNotification(members) {
   body += "\nDon't forget to wish them!";
   
   MailApp.sendEmail({
-    to: email,
+    to: recipients,
     subject: subject,
     body: body
   });
 }
-```

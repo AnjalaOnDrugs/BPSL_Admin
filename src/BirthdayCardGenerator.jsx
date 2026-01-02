@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { toJpeg } from 'html-to-image';
-import { Download, X, Type, Calendar, Sparkles } from 'lucide-react';
+import { Download, X, Type, Calendar, Cake } from 'lucide-react';
 import bpslLogo from './assets/BPSL logo.png';
 
 // --- BIAS IMAGES ---
@@ -27,6 +27,7 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
     console.log(getBiasImage(member?.bias));
     const [name, setName] = useState(member?.name || 'Name');
     const [age, setAge] = useState(member?.ageTurning?.toString() || 'Age');
+    const [showAge, setShowAge] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const cardRef = useRef(null);
 
@@ -121,13 +122,25 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
                                             {name}
                                         </h1>
 
-                                        <div className="flex items-center space-x-4 mt-6">
-                                            <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-pink-500"></div>
-                                            <div className="text-2xl font-light text-white italic">
-                                                Turning <span className="text-pink-500 font-bold not-italic">{age}</span>
+                                        {showAge ? (
+                                            <div className="flex items-center space-x-4 mt-6">
+                                                <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-pink-500"></div>
+                                                <div className="text-2xl font-light text-white italic">
+                                                    Turning <span className="text-pink-500 font-bold not-italic">{age}</span>
+                                                </div>
+                                                <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-pink-500"></div>
                                             </div>
-                                            <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-pink-500"></div>
-                                        </div>
+                                        ) : (
+                                            <div className="flex items-center space-x-3 !mt-16 animate-in fade-in zoom-in duration-500">
+                                                <Cake size={16} className="text-cyan-400" />
+                                                <div className="px-4 py-1.5 border border-cyan-500/30 rounded-full bg-cyan-950/30 backdrop-blur-md">
+                                                    <span className="text-cyan-300 text-xs font-bold tracking-[0.25em] uppercase">
+                                                        {member?.dateAdded ? `BPSL Member • Since ${new Date(member.dateAdded).getFullYear()}` : 'Official Member'}
+                                                    </span>
+                                                </div>
+                                                <Cake size={16} className="text-cyan-400" />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Footer */}
@@ -166,16 +179,30 @@ const BirthdayCardGenerator = ({ member, onClose }) => {
                         </div>
 
                         <div>
-                            <label className="flex items-center text-xs font-bold text-cyan-500 uppercase tracking-widest mb-2 md:mb-3">
-                                <Calendar size={14} className="mr-2" /> Turning Age
-                            </label>
-                            <input
-                                type="text"
-                                value={age}
-                                onChange={(e) => setAge(e.target.value)}
-                                className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:outline-none transition-colors text-sm"
-                                placeholder="Enter Age"
-                            />
+                            <div className="flex items-center justify-between mb-2 md:mb-3">
+                                <label className="flex items-center text-xs font-bold text-cyan-500 uppercase tracking-widest">
+                                    <Calendar size={14} className="mr-2" /> Turning Age
+                                </label>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={showAge}
+                                        onChange={(e) => setShowAge(e.target.checked)}
+                                    />
+                                    <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                                </label>
+                            </div>
+
+                            {showAge && (
+                                <input
+                                    type="text"
+                                    value={age}
+                                    onChange={(e) => setAge(e.target.value)}
+                                    className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:outline-none transition-colors text-sm animate-in fade-in slide-in-from-top-2 duration-200"
+                                    placeholder="Enter Age"
+                                />
+                            )}
                         </div>
                     </div>
 
