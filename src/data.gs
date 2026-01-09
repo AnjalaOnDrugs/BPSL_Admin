@@ -111,6 +111,22 @@ function doPost(e) {
         message: 'Member Details Updated'
       })).setMimeType(ContentService.MimeType.JSON);
     }
+
+    // ACTION: UPDATE BIRTHDAY
+    if (data.action === 'updateBirthday') {
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form responses 1");
+      var rowNumber = data.id + 1; // id is 0-based index from values array, so +1 for 1-based row index
+      
+      // Update Birthday (Column F -> 6)
+      if (data.birthday !== undefined) {
+        sheet.getRange(rowNumber, 6).setValue(data.birthday);
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Birthday Updated'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     
     // ACTION: UPDATE WHATSAPP CONFIG
     if (data.action === 'updateWhatsappConfig') {

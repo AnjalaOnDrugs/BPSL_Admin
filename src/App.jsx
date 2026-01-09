@@ -17,6 +17,7 @@ import {
   Clock,
   CheckCircle,
   ChevronRight,
+  ChevronLeft,
   Gift,
   Sparkles,
   LayoutDashboard,
@@ -77,6 +78,7 @@ const App = () => {
   const [adminName, setAdminName] = useState('');
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState(false);
+  const [showBirthdayPicker, setShowBirthdayPicker] = useState(false);
 
   // --- SWIPE LOGIC ---
   const tabOrder = ['dashboard', 'members', 'birthdays', 'statistics', 'edit'];
@@ -332,6 +334,39 @@ const App = () => {
       console.error("Toggle notifications failed", error);
       alert("Failed to update notification settings.");
       setNotificationEnabled(!enabled); // Revert on error
+    }
+  };
+
+  // --- UPDATE BIRTHDAY ---
+  const handleUpdateBirthday = async (newDate) => {
+    if (!selectedMember) return;
+
+    // Format date as YYYY-MM-DD using local timezone (not UTC)
+    const year = newDate.getFullYear();
+    const month = String(newDate.getMonth() + 1).padStart(2, '0');
+    const day = String(newDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    // Optimistic update
+    const updatedMember = { ...selectedMember, birthday: formattedDate };
+    setSelectedMember(updatedMember);
+    setData(prevData => prevData.map(m => m.id === selectedMember.id ? updatedMember : m));
+    setShowBirthdayPicker(false);
+
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: 'updateBirthday',
+          id: selectedMember.id,
+          birthday: formattedDate
+        }),
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" }
+      });
+    } catch (error) {
+      console.error("Update birthday failed", error);
+      alert("Failed to update birthday.");
     }
   };
 
@@ -1000,7 +1035,20 @@ const App = () => {
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-6">
-                  <DetailItem icon={<Calendar size={16} />} label="Birthday" value={selectedMember.birthday ? new Date(selectedMember.birthday).toLocaleDateString() : '--'} />
+                  {/* Editable Birthday */}
+                  <div className="flex items-start space-x-3">
+                    <div className="mt-1 text-gray-600"><Calendar size={16} /></div>
+                    <div className="flex-1">
+                      <label className="text-[10px] font-bold text-gray-600 uppercase block">Birthday</label>
+                      <button
+                        onClick={() => setShowBirthdayPicker(true)}
+                        className="text-gray-300 text-sm hover:text-cyan-400 transition-colors cursor-pointer"
+                        title="Click to edit birthday"
+                      >
+                        {selectedMember.birthday ? new Date(selectedMember.birthday).toLocaleDateString() : 'Not set - Click to add'}
+                      </button>
+                    </div>
+                  </div>
                   <DetailItem icon={<Clock size={16} />} label="Added On" value={selectedMember.dateAdded ? new Date(selectedMember.dateAdded).toLocaleDateString() : '--'} />
                   <DetailItem icon={<Star size={16} />} label="Score" value={selectedMember.score || '--'} />
                   <DetailItem icon={<User size={16} />} label="Bias" value={selectedMember.bias || '--'} />
@@ -1062,6 +1110,40 @@ const App = () => {
           />
         )
       }
+
+      {/* Birthday Calendar Modal */}
+      {showBirthdayPicker && selectedMember && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setShowBirthdayPicker(false)}
+          />
+
+          {/* Calendar Container */}
+          <div className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl shadow-cyan-500/10 p-6 w-[340px] animate-in zoom-in-95 fade-in duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-light text-white flex items-center">
+                <Calendar size={20} className="mr-2 text-cyan-400" />
+                Select Birthday
+              </h3>
+              <button
+                onClick={() => setShowBirthdayPicker(false)}
+                className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-full transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Calendar Component */}
+            <BirthdayCalendar
+              initialDate={selectedMember.birthday ? new Date(selectedMember.birthday) : new Date()}
+              onSelect={handleUpdateBirthday}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Name Prompt Modal */}
       {
@@ -1144,5 +1226,164 @@ const StatusSelector = ({ currentStatus, onUpdate }) => {
     </div>
   );
 }
+
+// --- BIRTHDAY CALENDAR COMPONENT ---
+const BirthdayCalendar = ({ initialDate, onSelect }) => {
+  const [currentDate, setCurrentDate] = useState(initialDate || new Date());
+  const [viewMonth, setViewMonth] = useState(initialDate?.getMonth() || new Date().getMonth());
+  const [viewYear, setViewYear] = useState(initialDate?.getFullYear() || new Date().getFullYear());
+  const [showYearPicker, setShowYearPicker] = useState(false);
+  const [yearRangeStart, setYearRangeStart] = useState(Math.floor((initialDate?.getFullYear() || new Date().getFullYear()) / 12) * 12);
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  const prevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear(viewYear - 1);
+    } else {
+      setViewMonth(viewMonth - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear(viewYear + 1);
+    } else {
+      setViewMonth(viewMonth + 1);
+    }
+  };
+
+  const handleDateClick = (day) => {
+    const selectedDate = new Date(viewYear, viewMonth, day);
+    onSelect(selectedDate);
+  };
+
+  const handleYearSelect = (year) => {
+    setViewYear(year);
+    setShowYearPicker(false);
+  };
+
+  const isSelected = (day) => {
+    if (!initialDate) return false;
+    return (
+      day === initialDate.getDate() &&
+      viewMonth === initialDate.getMonth() &&
+      viewYear === initialDate.getFullYear()
+    );
+  };
+
+  const isToday = (day) => {
+    const today = new Date();
+    return (
+      day === today.getDate() &&
+      viewMonth === today.getMonth() &&
+      viewYear === today.getFullYear()
+    );
+  };
+
+  // Build calendar grid
+  const calendarDays = [];
+
+  // Empty slots for days before the first day of the month
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    calendarDays.push(<div key={`empty-${i}`} className="w-10 h-10" />);
+  }
+
+  // Days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const selected = isSelected(day);
+    const today = isToday(day);
+
+    calendarDays.push(
+      <button
+        key={day}
+        onClick={() => handleDateClick(day)}
+        className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${selected
+          ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]'
+          : today
+            ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
+            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+          }`}
+      >
+        {day}
+      </button>
+    );
+  }
+
+  // Build year grid (12 years at a time)
+  const yearGrid = [];
+  for (let i = 0; i < 12; i++) {
+    const year = yearRangeStart + i;
+    yearGrid.push(
+      <button
+        key={year}
+        onClick={() => handleYearSelect(year)}
+        className={`py-3 rounded-lg text-sm font-medium transition-all duration-200 ${year === viewYear
+            ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]'
+            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+          }`}
+      >
+        {year}
+      </button>
+    );
+  }
+
+  return (
+    <div>
+      {/* Month/Year Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={showYearPicker ? () => setYearRangeStart(yearRangeStart - 12) : prevMonth}
+          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <button
+          onClick={() => setShowYearPicker(!showYearPicker)}
+          className="text-center hover:bg-gray-800 px-3 py-1 rounded-lg transition-colors"
+        >
+          <span className="text-white font-medium">{monthNames[viewMonth]}</span>
+          <span className="text-gray-400 ml-2">{viewYear}</span>
+          <span className={`ml-1 text-gray-500 text-xs transition-transform inline-block ${showYearPicker ? 'rotate-180' : ''}`}>▼</span>
+        </button>
+        <button
+          onClick={showYearPicker ? () => setYearRangeStart(yearRangeStart + 12) : nextMonth}
+          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
+      {showYearPicker ? (
+        /* Year Picker Grid */
+        <div className="grid grid-cols-4 gap-2">
+          {yearGrid}
+        </div>
+      ) : (
+        <>
+          {/* Day Names Header */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {dayNames.map(day => (
+              <div key={day} className="w-10 h-8 flex items-center justify-center text-[10px] font-bold text-gray-500 uppercase">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 export default App;
