@@ -227,6 +227,8 @@ const App = () => {
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
+      // Force refresh all data after update
+      fetchData(true);
     } catch (error) {
       console.error("Update failed", error);
       alert("Failed to save to Google Sheet.");
@@ -256,6 +258,8 @@ const App = () => {
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
+      // Force refresh all data after update
+      fetchData(true);
     } catch (error) {
       console.error("Update details failed", error);
       alert("Failed to save details.");
@@ -283,7 +287,8 @@ const App = () => {
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
-
+      // Force refresh all data after update
+      fetchData(true);
     } catch (error) {
       console.error("Save contact failed", error);
       alert("Failed to save contact.");
@@ -301,6 +306,8 @@ const App = () => {
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
+      // Force refresh all data after update
+      fetchData(true);
     } catch (error) {
       console.error("Save config failed", error);
       alert("Failed to save configuration.");
@@ -323,13 +330,14 @@ const App = () => {
     setNotificationEnabled(enabled);
 
     try {
-      const response = await fetch(APPS_SCRIPT_URL, {
+      await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ action: 'setNotifications', enabled: enabled }),
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
-      // Since no-cors, we can't read response, but we assume success or catch error
+      // Force refresh all data after update
+      fetchData(true);
     } catch (error) {
       console.error("Toggle notifications failed", error);
       alert("Failed to update notification settings.");
@@ -364,6 +372,8 @@ const App = () => {
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
       });
+      // Force refresh all data after update
+      fetchData(true);
     } catch (error) {
       console.error("Update birthday failed", error);
       alert("Failed to update birthday.");
@@ -1325,8 +1335,8 @@ const BirthdayCalendar = ({ initialDate, onSelect }) => {
         key={year}
         onClick={() => handleYearSelect(year)}
         className={`py-3 rounded-lg text-sm font-medium transition-all duration-200 ${year === viewYear
-            ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]'
-            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+          ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]'
+          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
           }`}
       >
         {year}
