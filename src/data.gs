@@ -106,6 +106,11 @@ function doPost(e) {
         sheet.getRange(rowNumber, 4).setValue(data.comments);
       }
 
+      // Update Bias (Column J -> 10)
+      if (data.bias !== undefined) {
+        sheet.getRange(rowNumber, 10).setValue(data.bias);
+      }
+
       return ContentService.createTextOutput(JSON.stringify({
         status: 'success',
         message: 'Member Details Updated'
@@ -240,6 +245,7 @@ function getStatusFromColor(hex) {
   if (hex === "#00ff00") return "In Group";
   if (hex === "#ff0000") return "Removed";
   if (hex === "#ffff00") return "Contacted";
+  if (hex === "#f79aaf") return "New Blinks";
   return "Not Contacted";
 }
 
@@ -248,6 +254,7 @@ function getColorFromStatus(status) {
     case "In Group": return "#00ff00"; // Green
     case "Removed": return "#ff0000"; // Red
     case "Contacted": return "#ffff00"; // Yellow
+    case "New Blinks": return "#f79aaf"; // Pink
     default: return null; // No Color (White/Reset)
   }
 }

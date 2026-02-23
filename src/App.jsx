@@ -68,6 +68,7 @@ const App = () => {
   // Editable fields state
   const [editName, setEditName] = useState('');
   const [editComments, setEditComments] = useState('');
+  const [editBias, setEditBias] = useState('');
 
   // WhatsApp & Admin State
   const [whatsappConfig, setWhatsappConfig] = useState({
@@ -211,6 +212,7 @@ const App = () => {
     if (selectedMember) {
       setEditName(selectedMember.name || '');
       setEditComments(selectedMember.comments || '');
+      setEditBias(selectedMember.bias || '');
     }
   }, [selectedMember]);
 
@@ -235,11 +237,11 @@ const App = () => {
     }
   };
 
-  // --- UPDATE MEMBER DETAILS (Name, Comments) ---
+  // --- UPDATE MEMBER DETAILS (Name, Comments, Bias) ---
   const handleUpdateMemberDetails = async () => {
     if (!selectedMember) return;
 
-    const updatedMember = { ...selectedMember, name: editName, comments: editComments };
+    const updatedMember = { ...selectedMember, name: editName, comments: editComments, bias: editBias };
 
     // Optimistic update
     const updatedData = data.map(m => m.id === selectedMember.id ? updatedMember : m);
@@ -253,7 +255,8 @@ const App = () => {
           action: 'updateMemberDetails',
           id: selectedMember.id,
           name: editName,
-          comments: editComments
+          comments: editComments,
+          bias: editBias
         }),
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" }
@@ -393,6 +396,7 @@ const App = () => {
       if (filter === 'Main') return member.status === 'In Group';
       if (filter === 'Contacted') return member.status === 'Contacted';
       if (filter === 'Pending') return member.status === 'Not Contacted';
+      if (filter === 'New Blinks') return member.status === 'New Blinks';
       if (filter === 'Removed') return member.status === 'Removed';
 
       return true;
@@ -455,6 +459,7 @@ const App = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'In Group': return 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]';
+      case 'New Blinks': return 'bg-[#f79aaf] shadow-[0_0_10px_rgba(247,154,175,0.8)]';
       case 'Removed': return 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]';
       case 'Contacted': return 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]';
       default: return 'bg-gray-500';
@@ -622,6 +627,7 @@ const App = () => {
               <div className="flex flex-wrap justify-center gap-4 mb-8">
                 {[
                   { id: 'Main', label: 'In Group', color: 'text-green-500' },
+                  { id: 'New Blinks', label: 'New Blinks', color: 'text-[#f79aaf]' },
                   { id: 'Contacted', label: 'Contacted', color: 'text-yellow-400' },
                   { id: 'Pending', label: 'Not Contacted', color: 'text-gray-400' },
                   { id: 'Removed', label: 'Removed', color: 'text-red-500' }
@@ -629,6 +635,7 @@ const App = () => {
                   // Calculate count for this tab
                   const count = data.filter(m => {
                     if (tab.id === 'Main') return m.status === 'In Group';
+                    if (tab.id === 'New Blinks') return m.status === 'New Blinks';
                     if (tab.id === 'Contacted') return m.status === 'Contacted';
                     if (tab.id === 'Pending') return m.status === 'Not Contacted';
                     if (tab.id === 'Removed') return m.status === 'Removed';
@@ -1061,7 +1068,19 @@ const App = () => {
                   </div>
                   <DetailItem icon={<Clock size={16} />} label="Added On" value={selectedMember.dateAdded ? new Date(selectedMember.dateAdded).toLocaleDateString() : '--'} />
                   <DetailItem icon={<Star size={16} />} label="Score" value={selectedMember.score || '--'} />
-                  <DetailItem icon={<User size={16} />} label="Bias" value={selectedMember.bias || '--'} />
+                  <div className="flex items-start space-x-3">
+                    <div className="mt-1 text-gray-600"><User size={16} /></div>
+                    <div className="flex-1">
+                      <label className="text-[10px] font-bold text-gray-600 uppercase block mb-1">Bias</label>
+                      <input
+                        type="text"
+                        value={editBias}
+                        onChange={(e) => setEditBias(e.target.value)}
+                        className="w-full bg-black/20 border border-transparent border-b-gray-800 rounded-none px-0 py-1 text-gray-300 text-sm focus:border-b-cyan-500 focus:outline-none transition-colors"
+                        placeholder="Bias"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Comments Section */}
@@ -1210,6 +1229,7 @@ const DetailItem = ({ icon, label, value }) => (
 const StatusSelector = ({ currentStatus, onUpdate }) => {
   const statuses = [
     { id: 'Not Contacted', label: 'Not Contacted', color: 'bg-white' },
+    { id: 'New Blinks', label: 'New Blinks', color: 'bg-[#f79aaf]' },
     { id: 'Contacted', label: 'Contacted', color: 'bg-yellow-400' },
     { id: 'In Group', label: 'In Group', color: 'bg-green-500' },
     { id: 'Removed', label: 'Removed', color: 'bg-red-500' },

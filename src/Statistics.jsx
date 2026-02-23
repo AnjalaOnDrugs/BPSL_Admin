@@ -79,7 +79,7 @@ const Statistics = ({ data }) => {
         }));
     }, [data]);
 
-    const COLORS = ['#22c55e', '#eab308', '#ef4444', '#9ca3af']; // Green, Yellow, Red, Gray
+    const COLORS = ['#22c55e', '#eab308', '#ef4444', '#f79aaf', '#9ca3af']; // Green, Yellow, Red, Pink, Gray
 
     // --- 3. SCORE DISTRIBUTION ---
     const scoreData = useMemo(() => {
