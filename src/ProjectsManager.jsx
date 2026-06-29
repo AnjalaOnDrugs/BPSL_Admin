@@ -25,7 +25,7 @@ const EMPTY_FORM = {
   youtubeUrl: '',
   linkUrl: '',
   imageUrl: '',
-  collaborativeEvent: false,
+  eventType: '',
 };
 
 export default function ProjectsManager() {
@@ -64,7 +64,7 @@ export default function ProjectsManager() {
       id: p.id, title: p.title || '', body: p.body || '', category: p.category || 'past',
       order: typeof p.order === 'number' ? String(p.order) : '',
       youtubeUrl: p.youtubeUrl || '', linkUrl: p.linkUrl || '', imageUrl: p.imageUrl || '',
-      collaborativeEvent: !!p.collaborativeEvent,
+      eventType: p.eventType || '',
     });
     setFile(null); setError('');
   };
@@ -98,7 +98,7 @@ export default function ProjectsManager() {
         category: form.category,
         youtubeUrl: form.youtubeUrl.trim(),
         linkUrl: form.linkUrl.trim(),
-        collaborativeEvent: form.collaborativeEvent,
+        eventType: form.eventType,
       };
       if (form.order !== '') base.order = Number(form.order);
 
@@ -207,18 +207,14 @@ export default function ProjectsManager() {
             className="w-full bg-black/30 border border-gray-800 rounded pl-9 pr-3 py-2 text-gray-200 text-sm focus:outline-none focus:border-cyan-500/50" />
         </div>
 
-        <div className="flex items-center gap-2 py-1">
-          <input
-            type="checkbox"
-            id="collaborativeEvent"
-            checked={form.collaborativeEvent}
-            onChange={(e) => setForm((f) => ({ ...f, collaborativeEvent: e.target.checked }))}
-            className="w-4 h-4 rounded border-gray-800 bg-black/30 text-pink-500 focus:ring-cyan-500/50 focus:ring-offset-gray-900 accent-pink-500"
-          />
-          <label htmlFor="collaborativeEvent" className="text-sm text-gray-400 select-none cursor-pointer">
-            Collaborative / Community Event
-          </label>
-        </div>
+        <label className="text-xs text-gray-500 uppercase tracking-wider block">Event Type (optional)
+          <select value={form.eventType} onChange={onField('eventType')}
+            className="mt-1 w-full bg-black/30 border border-gray-800 rounded px-3 py-2 text-gray-200 text-sm focus:outline-none focus:border-cyan-500/50">
+            <option value="">None (Regular Project)</option>
+            <option value="collaborative">Collaborative Event</option>
+            <option value="community">Community Event</option>
+          </select>
+        </label>
 
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
@@ -270,9 +266,14 @@ function ProjectGroup({ title, items, onEdit, onDelete, editingId }) {
               <div className="flex-1 min-w-0">
                 <div className="text-sm text-gray-200 font-medium truncate flex items-center gap-2">
                   <span className="truncate">{p.title}</span>
-                  {p.collaborativeEvent && (
+                  {p.eventType === 'collaborative' && (
                     <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 rounded">
                       Collaborative
+                    </span>
+                  )}
+                  {p.eventType === 'community' && (
+                    <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 rounded">
+                      Community
                     </span>
                   )}
                 </div>
