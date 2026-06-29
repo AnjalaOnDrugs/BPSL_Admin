@@ -25,6 +25,7 @@ const EMPTY_FORM = {
   youtubeUrl: '',
   linkUrl: '',
   imageUrl: '',
+  collaborativeEvent: false,
 };
 
 export default function ProjectsManager() {
@@ -63,6 +64,7 @@ export default function ProjectsManager() {
       id: p.id, title: p.title || '', body: p.body || '', category: p.category || 'past',
       order: typeof p.order === 'number' ? String(p.order) : '',
       youtubeUrl: p.youtubeUrl || '', linkUrl: p.linkUrl || '', imageUrl: p.imageUrl || '',
+      collaborativeEvent: !!p.collaborativeEvent,
     });
     setFile(null); setError('');
   };
@@ -96,6 +98,7 @@ export default function ProjectsManager() {
         category: form.category,
         youtubeUrl: form.youtubeUrl.trim(),
         linkUrl: form.linkUrl.trim(),
+        collaborativeEvent: form.collaborativeEvent,
       };
       if (form.order !== '') base.order = Number(form.order);
 
@@ -204,6 +207,19 @@ export default function ProjectsManager() {
             className="w-full bg-black/30 border border-gray-800 rounded pl-9 pr-3 py-2 text-gray-200 text-sm focus:outline-none focus:border-cyan-500/50" />
         </div>
 
+        <div className="flex items-center gap-2 py-1">
+          <input
+            type="checkbox"
+            id="collaborativeEvent"
+            checked={form.collaborativeEvent}
+            onChange={(e) => setForm((f) => ({ ...f, collaborativeEvent: e.target.checked }))}
+            className="w-4 h-4 rounded border-gray-800 bg-black/30 text-pink-500 focus:ring-cyan-500/50 focus:ring-offset-gray-900 accent-pink-500"
+          />
+          <label htmlFor="collaborativeEvent" className="text-sm text-gray-400 select-none cursor-pointer">
+            Collaborative / Community Event
+          </label>
+        </div>
+
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
             <ImageIcon size={16} className="text-pink-400" />
@@ -252,7 +268,14 @@ function ProjectGroup({ title, items, onEdit, onDelete, editingId }) {
                   : <ImageIcon size={20} className="text-gray-700" />}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-200 font-medium truncate">{p.title}</div>
+                <div className="text-sm text-gray-200 font-medium truncate flex items-center gap-2">
+                  <span className="truncate">{p.title}</span>
+                  {p.collaborativeEvent && (
+                    <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 rounded">
+                      Collaborative
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-gray-500 line-clamp-2">{p.body}</div>
                 <div className="text-[10px] text-gray-600 mt-1">order {p.order}</div>
               </div>
