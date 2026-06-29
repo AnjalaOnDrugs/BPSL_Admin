@@ -11,6 +11,7 @@ const fn = {
   add: anyApi.homeGallery.add,
   update: anyApi.homeGallery.update,
   remove: anyApi.homeGallery.remove,
+  projectsList: anyApi.projects.list,
 };
 
 // Admin identity: a phone in ALWAYS_ALLOWED_PHONES (convex/adminAuth.ts).
@@ -18,15 +19,21 @@ const ADMIN_PHONE = '714545776'; // Anjala
 
 export default function GalleryManager() {
   const images = useQuery(fn.list, {});
+  const projects = useQuery(fn.projectsList, {});
   const generateUploadUrl = useMutation(fn.generateUploadUrl);
   const addImage = useMutation(fn.add);
   const updateImage = useMutation(fn.update);
   const removeImage = useMutation(fn.remove);
 
+  const projectList = projects || [];
+  const projectTitleById = {};
+  projectList.forEach((p) => { projectTitleById[p.id] = p.title; });
+
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('BPSL_ADMIN_KEY') || '');
   const [file, setFile] = useState(null);
   const [caption, setCaption] = useState('');
   const [order, setOrder] = useState('');
+  const [projectId, setProjectId] = useState(''); // '' = homepage only
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -69,8 +76,9 @@ export default function GalleryManager() {
       const storageId = await uploadFile(file);
       const args = { ...creds(), storageId, caption: caption.trim() };
       if (order !== '') args.order = Number(order);
+      if (projectId) args.projectId = projectId;
       await addImage(args);
-      setFile(null); setCaption(''); setOrder('');
+      setFile(null); setCaption(''); setOrder(''); setProjectId('');
     } catch (err) {
       handleError(err);
     } finally {
@@ -91,9 +99,15 @@ export default function GalleryManager() {
     }
   };
 
-  const saveMeta = async (img, nextCaption, nextOrder, onDone) => {
+  const saveMeta = async (img, nextCaption, nextOrder, nextProjectId, onDone) => {
     try {
-      await updateImage({ ...creds(), id: img.id, caption: nextCaption.trim(), order: Number(nextOrder) || 0 });
+      await updateImage({
+        ...creds(),
+        id: img.id,
+        caption: nextCaption.trim(),
+        order: Number(nextOrder) || 0,
+        projectId: nextProjectId || null, // null unlinks (homepage)
+      });
       onDone(true);
     } catch (err) {
       onDone(false);
@@ -147,6 +161,14 @@ export default function GalleryManager() {
             className="mt-1 w-full bg-black/30 border border-gray-800 rounded px-3 py-2 text-gray-200 text-sm focus:outline-none focus:border-cyan-500/50" />
         </label>
 
+        <label className="block text-xs text-gray-500 uppercase tracking-wider">Link to project
+          <select value={projectId} onChange={(e) => setProjectId(e.target.value)}
+            className="mt-1 w-full bg-black/30 border border-gray-800 rounded px-3 py-2 text-gray-200 text-sm focus:outline-none focus:border-cyan-500/50">
+            <option value="">Homepage gallery (no project)</option>
+            {projectList.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+          </select>
+        </label>
+
         <button type="submit" disabled={busy}
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 disabled:opacity-50 text-black font-semibold py-2.5 rounded uppercase tracking-wider text-sm transition-all">
           {busy ? <Loader size={16} className="animate-spin" /> : <Plus size={16} />}
@@ -165,7 +187,7 @@ export default function GalleryManager() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((img) => (
-                <GalleryTile key={img.id} img={img} onSave={saveMeta} onDelete={handleDelete} />
+                <GalleryTile key={img.id} img={img} projects={projectList} onSave={saveMeta} onDelete={handleDelete} />
               ))}
             </div>
           )}
@@ -175,9 +197,10 @@ export default function GalleryManager() {
   );
 }
 
-function GalleryTile({ img, onSave, onDelete }) {
+function GalleryTile({ img, projects, onSave, onDelete }) {
   const [caption, setCaption] = useState(img.caption || '');
   const [order, setOrder] = useState(typeof img.order === 'number' ? String(img.order) : '0');
+  const [projectId, setProjectId] = useState(img.projectId || '');
   const [saved, setSaved] = useState(false);
 
   return (
@@ -186,10 +209,15 @@ function GalleryTile({ img, onSave, onDelete }) {
       <div className="p-2 space-y-2">
         <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Caption"
           className="w-full bg-black/30 border border-gray-800 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-cyan-500/50" />
+        <select value={projectId} onChange={(e) => setProjectId(e.target.value)}
+          className="w-full bg-black/30 border border-gray-800 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-cyan-500/50">
+          <option value="">Homepage gallery</option>
+          {(projects || []).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+        </select>
         <div className="flex gap-2">
           <input type="number" value={order} onChange={(e) => setOrder(e.target.value)} placeholder="Order"
             className="w-16 bg-black/30 border border-gray-800 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-cyan-500/50" />
-          <button onClick={() => onSave(img, caption, order, (ok) => { if (ok) { setSaved(true); setTimeout(() => setSaved(false), 1200); } })}
+          <button onClick={() => onSave(img, caption, order, projectId, (ok) => { if (ok) { setSaved(true); setTimeout(() => setSaved(false), 1200); } })}
             className="flex-1 flex items-center justify-center gap-1 bg-cyan-900/30 hover:bg-cyan-800/40 text-cyan-300 rounded px-2 py-1 text-xs">
             <Save size={12} /> {saved ? 'Saved' : 'Save'}
           </button>
