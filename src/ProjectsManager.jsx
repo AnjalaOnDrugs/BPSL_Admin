@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
-import { makeFunctionReference } from 'convex/server';
+import { anyApi } from 'convex/server';
 import { Plus, Trash2, Edit3, Image as ImageIcon, Youtube, Link as LinkIcon, X, Loader, KeyRound, Save } from 'lucide-react';
 
-// String references to the website's Convex functions (convex/projects.ts).
+// References to the website's Convex functions (convex/projects.ts).
+// anyApi.<module>.<fn> resolves to the "module:fn" reference without codegen.
 const fn = {
-  list: makeFunctionReference('query', 'projects:list'),
-  generateUploadUrl: makeFunctionReference('mutation', 'projects:generateUploadUrl'),
-  add: makeFunctionReference('mutation', 'projects:add'),
-  update: makeFunctionReference('mutation', 'projects:update'),
-  remove: makeFunctionReference('mutation', 'projects:remove'),
+  list: anyApi.projects.list,
+  generateUploadUrl: anyApi.projects.generateUploadUrl,
+  add: anyApi.projects.add,
+  update: anyApi.projects.update,
+  remove: anyApi.projects.remove,
 };
 
 // Admin identity: a phone in ALWAYS_ALLOWED_PHONES (convex/adminAuth.ts).
