@@ -38,7 +38,8 @@ import useSwipe from './hooks/useSwipe';
 import Statistics from './Statistics';
 import LoadingScreen from './LoadingScreen';
 import ProjectsManager from './ProjectsManager';
-import { BarChart2, ShieldCheck, FolderKanban } from 'lucide-react';
+import GalleryManager from './GalleryManager';
+import { BarChart2, ShieldCheck, FolderKanban, Images } from 'lucide-react';
 
 // --- MOCK DATA (Fallback) ---
 const MOCK_DATA = [
@@ -83,7 +84,7 @@ const App = () => {
   const [showBirthdayPicker, setShowBirthdayPicker] = useState(false);
 
   // --- SWIPE LOGIC ---
-  const tabOrder = ['dashboard', 'members', 'birthdays', 'statistics', 'projects', 'edit'];
+  const tabOrder = ['dashboard', 'members', 'birthdays', 'statistics', 'projects', 'gallery', 'edit'];
 
   const changeTab = (newTab) => {
     const currentIndex = tabOrder.indexOf(activeTab);
@@ -480,6 +481,7 @@ const App = () => {
         <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => changeTab('birthdays')} />
         <NavIcon icon={<BarChart2 size={20} />} active={activeTab === 'statistics'} onClick={() => changeTab('statistics')} />
         <NavIcon icon={<FolderKanban size={20} />} active={activeTab === 'projects'} onClick={() => changeTab('projects')} />
+        <NavIcon icon={<Images size={20} />} active={activeTab === 'gallery'} onClick={() => changeTab('gallery')} />
         <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => changeTab('edit')} />
       </div>
 
@@ -494,6 +496,7 @@ const App = () => {
           <NavIcon icon={<Cake size={20} />} active={activeTab === 'birthdays'} onClick={() => changeTab('birthdays')} />
           <NavIcon icon={<BarChart2 size={20} />} active={activeTab === 'statistics'} onClick={() => changeTab('statistics')} />
           <NavIcon icon={<FolderKanban size={20} />} active={activeTab === 'projects'} onClick={() => changeTab('projects')} />
+          <NavIcon icon={<Images size={20} />} active={activeTab === 'gallery'} onClick={() => changeTab('gallery')} />
           <NavIcon icon={<Edit3 size={20} />} active={activeTab === 'edit'} onClick={() => changeTab('edit')} />
         </div>
         <div className="mt-auto pb-4">
@@ -810,6 +813,13 @@ const App = () => {
         {activeTab === 'projects' && (
           <div key="projects" className={`${direction === 'left' ? 'animate-slide-left' : direction === 'right' ? 'animate-slide-right' : 'animate-in fade-in duration-500'}`}>
             <ProjectsManager />
+          </div>
+        )}
+
+        {/* ==================== GALLERY VIEW ==================== */}
+        {activeTab === 'gallery' && (
+          <div key="gallery" className={`${direction === 'left' ? 'animate-slide-left' : direction === 'right' ? 'animate-slide-right' : 'animate-in fade-in duration-500'}`}>
+            <GalleryManager />
           </div>
         )}
 
